@@ -43,11 +43,11 @@
 
 Индексы: `UX_UploadBatch_CorrelationId`; `IX_UploadBatch_UploadedAt`.
 
-### restrict.SpecialCase
+### restrict.ErrorProcessingCase
 
 | Column | Type | Null | Notes |
 | --- | --- | --- | --- |
-| SpecialCaseId | UNIQUEIDENTIFIER | N | PK |
+| ErrorProcessingCaseId | UNIQUEIDENTIFIER | N | PK |
 | ListTypeId | INT | N | FK |
 | UploadCorrelationId | UNIQUEIDENTIFIER | Y | логическая связь |
 | AccessTokenHash | VARBINARY(32) | N | SHA-256 |
@@ -60,17 +60,17 @@
 | ResolvedBy | NVARCHAR(256) | Y | |
 
 Индексы:
-- `IX_SpecialCase_Status_ExpiresAt` (`Status`, `ExpiresAt`);
+- `IX_ErrorProcessingCase_Status_ExpiresAt` (`Status`, `ExpiresAt`);
 - доступ по Id — PK.
 
 CHECK (рекомендуется): `Status IN ('Pending','ResolvedByUser','Expired','Cancelled')`.
 
-### restrict.SpecialCaseItem
+### restrict.ErrorProcessingItem
 
 | Column | Type | Null | Notes |
 | --- | --- | --- | --- |
-| SpecialCaseItemId | UNIQUEIDENTIFIER | N | PK |
-| SpecialCaseId | UNIQUEIDENTIFIER | N | FK ON DELETE CASCADE |
+| ErrorProcessingItemId | UNIQUEIDENTIFIER | N | PK |
+| ErrorProcessingCaseId | UNIQUEIDENTIFIER | N | FK ON DELETE CASCADE |
 | FieldCode | NVARCHAR(128) | N | |
 | RowNumber | INT | Y | |
 | RawValue | NVARCHAR(MAX) | Y | |
@@ -79,7 +79,7 @@ CHECK (рекомендуется): `Status IN ('Pending','ResolvedByUser','Expi
 | IsRequired | BIT | N | DEFAULT 1 |
 | SortOrder | INT | N | DEFAULT 0 |
 
-Индексы: `IX_SpecialCaseItem_SpecialCaseId` (`SpecialCaseId`, `SortOrder`).
+Индексы: `IX_ErrorProcessingItem_ErrorProcessingCaseId` (`ErrorProcessingCaseId`, `SortOrder`).
 
 ## 3. Seed ListType (MVP)
 

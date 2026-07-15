@@ -34,3 +34,7 @@ appsettings.*.local.json
 *.pfx
 .env
 .env.*
+!.env.example
+
+# Local smoke uploads
+.smoke-data/

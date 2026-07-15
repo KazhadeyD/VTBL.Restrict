@@ -1,0 +1,108 @@
+@page "/error-processing/{caseId:guid}"
+@model VTBL.Restrict.UI.Pages.ErrorProcessing.IndexModel
+@{
+    ViewData["Title"] = "Обработка ошибок";
+}
+
+<h1>Обработка ошибок</h1>
+
+@if (!string.IsNullOrEmpty(Model.AccessError))
+{
+    <div class="alert alert-danger" role="alert" data-access-error="@Model.AccessError">@Model.AccessError</div>
+    <p class="text-muted">Обратитесь в поддержку, если считаете, что ссылка должна работать.</p>
+}
+else if (Model.Form != null)
+{
+    @if (!string.IsNullOrEmpty(Model.InfoMessage))
+    {
+        <div class="alert alert-info" role="alert" data-case-readonly="true">@Model.InfoMessage</div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ResultMessage))
+    {
+        <div class="alert @(Model.IsSuccess ? "alert-success" : "alert-danger")"
+             role="alert"
+             data-resolve-result="@(Model.IsSuccess ? "success" : "error")"
+             data-error-code="@Model.ResultErrorCode">
+            @Model.ResultMessage
+        </div>
+    }
+
+    <div class="mb-3" data-ep-placeholder="true">
+        <h2 class="h4">@Model.Form.ListTypeName — @Model.Form.Status</h2>
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Тип</dt>
+            <dd class="col-sm-9" data-list-type="@Model.Form.ListTypeCode">@Model.Form.ListTypeName (@Model.Form.ListTypeCode)</dd>
+            <dt class="col-sm-3">Статус</dt>
+            <dd class="col-sm-9" data-case-status="@Model.Form.Status">@Model.Form.Status</dd>
+            <dt class="col-sm-3">Срок ссылки</dt>
+            <dd class="col-sm-9">@Model.Form.ExpiresAtUtc.ToString("u")</dd>
+            <dt class="col-sm-3">Файл</dt>
+            <dd class="col-sm-9"><code data-source-path="true">@Model.Form.SourceFilePath</code></dd>
+        </dl>
+    </div>
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <form method="post">
+        <input type="hidden" asp-for="CaseId" />
+        <input type="hidden" asp-for="Token" />
+        <input type="hidden" asp-for="Form.ErrorProcessingCaseId" />
+        <input type="hidden" asp-for="Form.ListTypeCode" />
+        <input type="hidden" asp-for="Form.ListTypeName" />
+        <input type="hidden" asp-for="Form.Status" />
+        <input type="hidden" asp-for="Form.ExpiresAtUtc" />
+        <input type="hidden" asp-for="Form.SourceFilePath" />
+        <input type="hidden" asp-for="Form.IsReadOnly" />
+
+        <table class="table table-sm" data-ep-items="true">
+            <thead>
+                <tr>
+                    <th>Поле</th>
+                    <th>Сырое</th>
+                    <th>Сообщение парсера</th>
+                    <th>Значение оператора</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for (var i = 0; i < Model.Form.Items.Count; i++)
+            {
+                <tr data-item-id="@Model.Form.Items[i].ErrorProcessingItemId">
+                    <td>
+                        @Model.Form.Items[i].FieldCode
+                        @if (Model.Form.Items[i].IsRequired)
+                        {
+                            <span class="text-danger" title="Обязательное">*</span>
+                        }
+                        <input type="hidden" asp-for="Form.Items[i].ErrorProcessingItemId" />
+                        <input type="hidden" asp-for="Form.Items[i].FieldCode" />
+                        <input type="hidden" asp-for="Form.Items[i].RawValue" />
+                        <input type="hidden" asp-for="Form.Items[i].ParserMessage" />
+                        <input type="hidden" asp-for="Form.Items[i].IsRequired" />
+                        <input type="hidden" asp-for="Form.Items[i].SortOrder" />
+                    </td>
+                    <td>@Model.Form.Items[i].RawValue</td>
+                    <td>@Model.Form.Items[i].ParserMessage</td>
+                    <td>
+                        @if (Model.Form.IsReadOnly)
+                        {
+                            <span data-user-value="true">@Model.Form.Items[i].UserValue</span>
+                            <input type="hidden" asp-for="Form.Items[i].UserValue" />
+                        }
+                        else
+                        {
+                            <input asp-for="Form.Items[i].UserValue" class="form-control" data-user-value-input="true" />
+                            <span asp-validation-for="Form.Items[i].UserValue" class="text-danger"></span>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+
+        @if (!Model.Form.IsReadOnly)
+        {
+            <button type="submit" class="btn btn-primary" data-ep-save="true">Сохранить</button>
+        }
+    </form>
+}

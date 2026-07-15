@@ -54,7 +54,7 @@
 
 Справочник хранится в `restrict.ListType` (см. [db/03-physical.md](db/03-physical.md)).  
 UI читает только `IsActive = 1`.  
-`SpecialCase.ListTypeId` ссылается на этот справочник.
+`ErrorProcessingCase.ListTypeId` ссылается на этот справочник.
 
 ## 6. Открытые уточнения
 

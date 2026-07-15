@@ -1,0 +1,54 @@
+name: vtbl-restrict
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: vtbl-restrict-mssql
+    env_file:
+      - .env
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+    ports:
+      - "${MSSQL_PORT:-1434}:1433"
+    volumes:
+      # Именованный том: bind E:\ ломает MSSQL на Docker Desktop (LSA 0xc0070102).
+      - vtbl_restrict_mssql_data:/var/opt/mssql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          '/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" || exit 1',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 90s
+    restart: unless-stopped
+
+  mssql-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: vtbl-restrict-mssql-init
+    env_file:
+      - .env
+    depends_on:
+      mssql:
+        condition: service_healthy
+    volumes:
+      - ./docker/mssql/init:/init:ro
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        echo "Applying 01-create-database.sql..."
+        /opt/mssql-tools18/bin/sqlcmd -S mssql -U sa -P "$$MSSQL_SA_PASSWORD" -C -b -i /init/01-create-database.sql
+        echo "Applying 02-schema.sql (schema + seed)..."
+        /opt/mssql-tools18/bin/sqlcmd -S mssql -U sa -P "$$MSSQL_SA_PASSWORD" -C -b -i /init/02-schema.sql
+        echo "Applying 03-rc-list-entry.sql..."
+        /opt/mssql-tools18/bin/sqlcmd -S mssql -U sa -P "$$MSSQL_SA_PASSWORD" -C -b -i /init/03-rc-list-entry.sql
+        echo "VTBL_Restrict initialized successfully."
+    restart: "no"
+
+volumes:
+  vtbl_restrict_mssql_data:
+    name: vtbl-restrict-mssql-data

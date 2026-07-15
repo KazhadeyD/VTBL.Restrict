@@ -9,7 +9,7 @@
 
 1. Справочник типов рестриктивных списков.
 2. (Опционально) учёт загрузок UI.
-3. Кейсы **особого случая**: то, что парсер не разобрал; UI показывает оператору по ссылке из письма и сохраняет правки.
+3. Кейсы **обработки ошибок**: то, что парсер не разобрал; UI показывает оператору по ссылке из письма и сохраняет правки.
 
 БД **не** хранит сами Excel/CSV как BLOB (файлы на шаре). БД **не** является хранилищем полностью успешно распарсенных списков (это зона парсера).
 
@@ -45,7 +45,7 @@
 
 **Инварианты:** `CorrelationId` уникален.
 
-### 2.3. SpecialCase
+### 2.3. ErrorProcessingCase
 
 Кейс ручной обработки по письму.
 
@@ -65,13 +65,13 @@
 - Редактирование UI только при `Status = Pending` и `ExpiresAt > UtcNow`.
 - Переход в `ResolvedByUser` только после успешного сохранения элементов.
 
-### 2.4. SpecialCaseItem
+### 2.4. ErrorProcessingItem
 
 Проблемное поле или строка внутри кейса.
 
 | Атрибут | Смысл |
 | --- | --- |
-| SpecialCaseId | FK |
+| ErrorProcessingCaseId | FK |
 | FieldCode | Код поля (или колонки) |
 | RowNumber | Номер строки исходного файла (nullable) |
 | RawValue | Что удалось вытащить / сырое |
@@ -82,7 +82,7 @@
 
 **Инварианты:** для `IsRequired = 1` при resolve `UserValue` не пустой (проверка UI + желательно CHECK/триггер на уровне приложения).
 
-## 3. Статусная модель SpecialCase
+## 3. Статусная модель ErrorProcessingCase
 
 ```text
                     ┌──────────┐
@@ -105,8 +105,8 @@
 | --- | --- | --- | --- |
 | ListType | Админ / миграции | UI, парсер | Админ |
 | UploadBatch | UI | UI, поддержка | UI (NotifyStatus) |
-| SpecialCase | Парсер | UI, парсер | UI (resolve), парсер (cancel/expire) |
-| SpecialCaseItem | Парсер | UI | UI (`UserValue` при resolve) |
+| ErrorProcessingCase | Парсер | UI, парсер | UI (resolve), парсер (cancel/expire) |
+| ErrorProcessingItem | Парсер | UI | UI (`UserValue` при resolve) |
 
 ## 5. Безопасность token
 

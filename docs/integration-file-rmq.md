@@ -86,14 +86,15 @@ UI **не** вызывает HTTP API парсера.
 | RMQ недоступен после записи файла | `NotifyStatus=Failed`; показать ошибку; опция «Повторить уведомление» публикует то же сообщение без новой копии файла |
 | Дубликат publish | Парсер должен быть идемпотентен по `correlationId` |
 
-## 4. Связь с особым случаем
+## 4. Связь с обработкой ошибок
 
 Парсер после проблем с полями:
 
-1. INSERT `SpecialCase` + `SpecialCaseItem`.
-2. Генерирует token, кладёт hash в БД.
+1. INSERT `ErrorProcessingCase` + `ErrorProcessingItem`.
+2. Генерирует данные кейса в БД (колонки token/TTL могут заполняться парсером «на будущее»).
 3. Шлёт письмо со ссылкой на UI:  
-   `{UiBaseUrl}/special-cases/{SpecialCaseId}?token={rawToken}`
+   `{UiBaseUrl}/error-processing/{ErrorProcessingCaseId}`  
+   (`?token=` опционален; **UI текущей реализации token не проверяет** — security epic отложен).
 
 Обратный канал UI ← парсер по содержимому кейса: **только БД** (не RMQ для UI на MVP).
 

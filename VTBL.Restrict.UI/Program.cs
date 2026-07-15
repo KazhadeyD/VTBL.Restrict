@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace VTBL.Restrict.UI
 {
+    /// <summary>
+    /// Точка входа host. Паттерн Startup сохранён (net5).
+    /// </summary>
     public class Program
     {
         public static void Main(string[] args)

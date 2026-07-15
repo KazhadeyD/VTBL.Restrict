@@ -12,7 +12,7 @@
 Реализовать веб-UI оператора для:
 
 1. Загрузки файла рестриктивного списка **as is** на удалённую папку и уведомления парсера через RabbitMQ (UC-01, UC-02, UC-05).
-2. Обработки особого случая по deep-link из письма с чтением/записью только через БД (UC-03, UC-04).
+2. Обработки обработки ошибок по deep-link из письма с чтением/записью только через БД (UC-03, UC-04).
 
 UI не парсит Excel/CSV, не вызывает HTTP API парсера. Парсер и почта — внешние системы.
 
@@ -22,7 +22,7 @@ UI не парсит Excel/CSV, не вызывает HTTP API парсера. �
 | --- | --- |
 | UC-01 | Upload UI → UploadApplication → FileShare + UploadBatchRepo + RmqPublisher |
 | UC-02 | Error mapping / logging в UI + Application |
-| UC-03 / UC-04 | SpecialCase UI → SpecialCaseApplication → SpecialCaseRepo (только БД) |
+| UC-03 / UC-04 | ErrorProcessingCase UI → ErrorProcessingCaseApplication → ErrorProcessingCaseRepo (только БД) |
 | UC-05 | ListTypeRepo (чтение IsActive) без смены сценария Upload |
 
 ---
@@ -69,18 +69,19 @@ UI не парсит Excel/CSV, не вызывает HTTP API парсера. �
 
 **Зависимости:** FC-FileIngress; SQL UploadBatch; RabbitMQ.
 
-#### FC-SpecialCaseAccess
+#### FC-ErrorProcessingAccess
 
-**Назначение:** авторизация deep-link и загрузка кейса.
+**Назначение:** загрузка кейса по deep-link (`caseId`). Security-gate (token/TTL/auth) — **out of scope** текущей реализации.
 
 **Функции:**
-- AuthenticateLink: caseId + raw token → SHA-256 → сравнение с AccessTokenHash; ExpiresAt; Status
-- LoadCaseView: SpecialCase + Items (ORDER BY SortOrder) из БД; **не** открывать файл на шаре
+- LoadByCaseId: статус → Ok / NotFound / AlreadyResolved / Unavailable
+- LoadCaseView: ErrorProcessingCase + Items (ORDER BY SortOrder) из БД; **не** открывать файл на шаре
   - UC: UC-03, UC-04
+- Query `token` игнорируется
 
-**Зависимости:** SQL SpecialCase / SpecialCaseItem.
+**Зависимости:** SQL ErrorProcessingCase / ErrorProcessingItem.
 
-#### FC-SpecialCaseResolve
+#### FC-ErrorProcessingResolve
 
 **Назначение:** сохранение правок оператора.
 
@@ -89,7 +90,7 @@ UI не парсит Excel/CSV, не вызывает HTTP API парсера. �
 - ResolveInTransaction: UPDATE UserValue items + Status=ResolvedByUser + ResolvedAt/ResolvedBy; запрет если не Pending
   - UC: UC-03 А2–А4
 
-**Зависимости:** FC-SpecialCaseAccess; SQL (роль restrict_ui).
+**Зависимости:** FC-ErrorProcessingAccess; SQL (роль restrict_ui).
 
 #### FC-ListTypeCatalog
 
@@ -102,7 +103,7 @@ UI не парсит Excel/CSV, не вызывает HTTP API парсера. �
 
 #### FC-Observability
 
-**Назначение:** логирование с correlationId / caseId / listType; без сырого token и лишнего PII.
+**Назначение:** логирование с correlationId / caseId / listType. Маскирование чувствительных данных — deferred security epic.
 
 **UC:** все.
 
@@ -115,8 +116,8 @@ flowchart TB
   ingress[FC-FileIngress]
   notify[FC-UploadNotify]
   catalog[FC-ListTypeCatalog]
-  access[FC-SpecialCaseAccess]
-  resolve[FC-SpecialCaseResolve]
+  access[FC-ErrorProcessingAccess]
+  resolve[FC-ErrorProcessingResolve]
   obs[FC-Observability]
 
   op --> shell
@@ -149,8 +150,8 @@ flowchart TB
 | Проект | Тип | Назначение |
 | --- | --- | --- |
 | `VTBL.Restrict.UI` | ASP.NET Core Razor Pages host | Pages, DI composition, auth stub, middleware ошибок |
-| `VTBL.Restrict.Application` | classlib | сценарии Upload / RetryNotify / OpenSpecialCase / ResolveSpecialCase; DTO; порты (interfaces) |
-| `VTBL.Restrict.Domain` | classlib | сущности/enum: NotifyStatus, SpecialCaseStatus; value rules (sanitize filename, hash token) |
+| `VTBL.Restrict.Application` | classlib | сценарии Upload / RetryNotify / OpenErrorProcessing / ResolveErrorProcessing; DTO; порты (interfaces) |
+| `VTBL.Restrict.Domain` | classlib | сущности/enum: NotifyStatus, ErrorProcessingStatus; value rules (sanitize filename, hash token) |
 | `VTBL.Restrict.Infrastructure` | classlib | SQL (Dapper), FileShareStore, RabbitMqPublisher, options binding |
 
 **Зависимости:** UI → Application, Infrastructure (только composition); Application → Domain; Infrastructure → Application (ports) + Domain. UI не ссылается на SQL/RMQ напрямую в PageModels, кроме DI.
@@ -163,23 +164,23 @@ flowchart TB
 
 **Тип:** Web host  
 **Технологии:** ASP.NET Core Razor Pages  
-**Реализует:** отображение Upload / Special Case placeholder / Invalid link; mapping ошибок UC-02  
+**Реализует:** отображение Upload / Error Processing placeholder / Invalid link; mapping ошибок UC-02  
 **Входящие:** HTTP от оператора  
 **Исходящие:** Application services  
 
 Страницы (маршруты):
 - `/` или `/upload` — загрузка
 - POST retry notify (по UploadBatchId / CorrelationId)
-- `/special-cases/{caseId}` — кейс + `?token=`
-- состояние отказа на том же маршруте или `/special-cases/invalid`
+- `/error-processing/{caseId}` — кейс + `?token=`
+- состояние отказа на том же маршруте или `/error-processing/invalid`
 
 #### C-Application
 
 **Сценарии (application services):**
 1. `UploadRestrictFileCommand` — validate → copy as-is → Insert Pending → publish → Published | Failed
 2. `RetryUploadNotificationCommand` — см. контракт Retry ниже (без FileIngress)
-3. `GetSpecialCaseForOperatorQuery` — auth token → view model
-4. `ResolveSpecialCaseCommand` — validate → transaction resolve
+3. `GetErrorProcessingForOperatorQuery` — load by caseId → view model (без token gate)
+4. `ResolveErrorProcessingCommand` — validate → transaction resolve
 
 **Контракт `RetryUploadNotificationCommand`:**
 1. Вход: `correlationId` (с формы retry).
@@ -195,7 +196,7 @@ flowchart TB
 - `IFileShareStore` (`WriteStreamAsIsAsync`, путь)
 - `IUploadBatchStore`
 - `IUploadNotifier` (RMQ publish)
-- `ISpecialCaseStore`
+- `IErrorProcessingStore`
 
 #### C-Infrastructure
 
@@ -211,7 +212,7 @@ flowchart TB
 | File share | inbox файлов |
 | RabbitMQ | транспорт к парсеру |
 | SQL Server `VTBL_Restrict` | данные |
-| ParseService | consumer RMQ, пишет SpecialCase, шлёт mail |
+| ParseService | consumer RMQ, пишет ErrorProcessingCase, шлёт mail |
 | Mail | доставка deep-link оператору |
 
 ### 3.4. Диаграмма компонентов
@@ -267,10 +268,10 @@ validate meta
 
 При ошибке RMQ после INSERT: файл и batch остаются; `Failed` + Retry.
 
-**Special Case (EC-05):**
+**Error Processing (EC-05):**
 
 ```text
-GET caseId+token → hash → load DB only → edit → transactional resolve
+GET caseId → load DB only → edit → transactional resolve (token query ignore)
 ```
 
 Запрет: `File.Open(SourceFilePath)` / чтение листа.
@@ -293,17 +294,17 @@ GET caseId+token → hash → load DB only → edit → transactional resolve
 Атрибуты: UploadBatchId, CorrelationId (UK), ListTypeId, OriginalFileName, StoredFilePath, UploadedBy, UploadedAt, NotifyStatus ∈ {Pending, Published, Failed}.  
 Правила: создаётся UI после успешной записи файла; retry меняет только NotifyStatus и повторно публикует.
 
-##### SpecialCase
+##### ErrorProcessingCase
 Кейс ручной обработки.  
-Атрибуты: SpecialCaseId, ListTypeId, UploadCorrelationId?, AccessTokenHash (SHA-256), Status ∈ {Pending, ResolvedByUser, Expired, Cancelled}, ExpiresAt, SourceFilePath? (текст), audit fields.  
+Атрибуты: ErrorProcessingCaseId, ListTypeId, UploadCorrelationId?, AccessTokenHash (SHA-256), Status ∈ {Pending, ResolvedByUser, Expired, Cancelled}, ExpiresAt, SourceFilePath? (текст), audit fields.  
 Правила: UI не INSERT; resolve только Pending + not expired; token в БД только hash.
 
-##### SpecialCaseItem
+##### ErrorProcessingItem
 Проблемные поля.  
-Атрибуты: SpecialCaseItemId, SpecialCaseId, FieldCode, RowNumber?, RawValue?, ParserMessage?, UserValue?, IsRequired, SortOrder.  
+Атрибуты: ErrorProcessingItemId, ErrorProcessingCaseId, FieldCode, RowNumber?, RawValue?, ParserMessage?, UserValue?, IsRequired, SortOrder.  
 Правила: UI обновляет только UserValue; при IsRequired UserValue обязателен на resolve.
 
-**Связи:** ListType 1—N UploadBatch; ListType 1—N SpecialCase; SpecialCase 1—N SpecialCaseItem.
+**Связи:** ListType 1—N UploadBatch; ListType 1—N ErrorProcessingCase; ErrorProcessingCase 1—N ErrorProcessingItem.
 
 ### 4.2. Логическая модель (сводка для UI)
 
@@ -312,7 +313,7 @@ GET caseId+token → hash → load DB only → edit → transactional resolve
 Ключевые индексы для UI:
 - `UX_ListType_Code`; фильтр `IsActive`
 - `UX_UploadBatch_CorrelationId`; lookup для retry
-- PK `SpecialCaseId` + items `IX_SpecialCaseItem_SpecialCaseId (SpecialCaseId, SortOrder)`
+- PK `ErrorProcessingCaseId` + items `IX_ErrorProcessingItem_ErrorProcessingCaseId (ErrorProcessingCaseId, SortOrder)`
 
 ### 4.3. Диаграмма
 
@@ -324,7 +325,7 @@ GET caseId+token → hash → load DB only → edit → transactional resolve
        │1:N
        ▼
 ┌──────────────┐ 1:N ┌──────────────────┐
-│ SpecialCase  │─────│ SpecialCaseItem  │
+│ ErrorProcessingCase  │─────│ ErrorProcessingItem  │
 └──────────────┘     └──────────────────┘
 ```
 
@@ -333,7 +334,7 @@ GET caseId+token → hash → load DB only → edit → transactional resolve
 - Исходный скрипт: `docs/db/05-ddl.sql` (+ seed MVK/TERRORISTS).
 - Применение на стендах: ручной DBA / sqlcmd на MVP; при необходимости позже — DbUp/FluentMigrator (не блокер).
 - Изменения схемы после MVP — версионируемые скрипты в `docs/db/migrations/` (появится при необходимости).
-- UI использует роль `restrict_ui` (`docs/db/04-access.md`): нет CREATE SpecialCase; нет UPDATE AccessTokenHash/RawValue/ParserMessage.
+- UI использует роль `restrict_ui` (`docs/db/04-access.md`): нет CREATE ErrorProcessingCase; нет UPDATE AccessTokenHash/RawValue/ParserMessage.
 
 ### 4.5. Доступ UI к данным (операции)
 
@@ -343,7 +344,7 @@ GET caseId+token → hash → load DB only → edit → transactional resolve
 | Insert batch | `INSERT UploadBatch … Pending` |
 | Update notify | `UPDATE NotifyStatus` |
 | Get batch by CorrelationId | для Retry |
-| Get case + items | JOIN / 2 queries by SpecialCaseId |
+| Get case + items | JOIN / 2 queries by ErrorProcessingCaseId |
 | Resolve | transaction: UPDATE items UserValue; UPDATE case Status/Resolved* WHERE Status=Pending AND ExpiresAt>UtcNow |
 
 ---
@@ -359,8 +360,8 @@ UI — server-rendered Razor Pages (+ form POST). Отдельного публ�
 | `/upload` (или `/`) | GET | форма: ListType + DnD/file + Отправить | UC-01 |
 | `/upload` | POST multipart | upload command | UC-01 |
 | `/upload/retry` | POST | retry notify по CorrelationId | UC-01 А3 |
-| `/special-cases/{caseId}?token=` | GET | форма кейса / отказ / read-only | UC-03/04 |
-| `/special-cases/{caseId}?token=` | POST | resolve | UC-03 |
+| `/error-processing/{caseId}?token=` | GET | форма кейса / отказ / read-only | UC-03/04 |
+| `/error-processing/{caseId}?token=` | POST | resolve | UC-03 |
 
 Ошибки: HTTP 200 с моделью ошибки UI или 400 на валидации; без stack trace в body (UC-02).
 
@@ -373,7 +374,7 @@ UI — server-rendered Razor Pages (+ form POST). Отдельного публ�
 ##### IUploadNotifier
 - `Task PublishUploadedAsync(RestrictFileUploadedMessage msg, string routingKey, CancellationToken ct)`
 
-##### IUploadBatchStore / ISpecialCaseStore / IListTypeReadStore
+##### IUploadBatchStore / IErrorProcessingStore / IListTypeReadStore
 - CRUD по границам §4.5
 
 ### 5.3. Интеграция RabbitMQ (UI → Parser)
@@ -415,7 +416,7 @@ UI — server-rendered Razor Pages (+ form POST). Отдельного публ�
 
 - Connection string на `VTBL_Restrict`, схема `restrict`
 - Роль приложения: `restrict_ui`
-- Special Case: только БД; SourceFilePath — display string
+- Error Processing: только БД; SourceFilePath — display string
 
 ### 5.6. Запрещённые интеграции
 
@@ -432,20 +433,20 @@ UI — server-rendered Razor Pages (+ form POST). Отдельного публ�
 | --- | --- |
 | Язык | C# |
 | Host | ASP.NET Core Razor Pages |
-| TFM сейчас | net5.0 (каркас) |
-| **Рекомендация prod** | **миграровать на net8.0 LTS до prod** |
+| TFM сейчас | **net5.0** (зафиксировано решением product owner 15.07.2026) |
+| Миграция net8 | **отложена**; не выполнять в текущем плане разработки |
 
-**Обоснование net8:** net5 EOS; поддержка безопасности/пакетов; LTS. MVP-разработку допустимо начать на net5 с первым техническим эпиком «retarget net8», либо сразу поднять solution на net8 при раскладке проектов (предпочтительно).
+**Обоснование net5 (override):** владелец продукта оставил целевой TFM solution на **net5.0**. Рекомендация LTS net8 из ревью архитектуры сохраняется как tech debt / отдельный эпик, **не** как задача текущего плана.
 
 ### 6.2. Frontend
 
-Razor Pages + минимальный JS для DnD (без SPA). Визуал Special Case — placeholder (EC-07).
+Razor Pages + минимальный JS для DnD (без SPA). Визуал Error Processing — placeholder (EC-07).
 
 ### 6.3. Данные и интеграции
 
 | Слой | Выбор | Обоснование |
 | --- | --- | --- |
-| SQL | SQL Server + Dapper | DDL готов; простой SQL под известные запросы; EF избыточен |
+| SQL | SQL Server + **EF Core 5** (`VTBL.Restrict.Context`) | DbContext + порты Application; DDL init по-прежнему SQL scripts |
 | RMQ | RabbitMQ.Client | один publish; MassTransit тяжелее без нужды |
 | Файлы | System.IO UNC/SMB | as-is stream copy |
 | Логи | ILogger + correlation scope | NFR наблюдаемость |
@@ -462,25 +463,26 @@ Razor Pages + минимальный JS для DnD (без SPA). Визуал Sp
 
 ## 7. Безопасность
 
-### 7.1. Аутентификация
+**Решение product owner (15.07.2026):** security-эпик **вне текущего плана разработки**. В MVP:
 
-- **Special Case:** первичный фактор — высокоэнтропийный token в query; хранение SHA-256; TTL ExpiresAt (A-01).
-- **Upload (MVP):** заглушка/опциональный Windows Authentication или конфиг-пользователь (A-01); prod auth (`deferred-ops`) не блокирует архитектуру: точка расширения — ASP.NET Core Authentication middleware без смены Application ports.
+- Error Processing открывается по `caseId` без проверки token/ExpiresAt/auth.
+- Auth оператора на Upload не делается.
+- Колонки `AccessTokenHash` / `ExpiresAt` в DDL могут остаться для будущего парсера/эпика; UI их как gate не использует.
 
-### 7.2. Авторизация данных
+### 7.1. Отложено (security epic)
 
-- Матрица `docs/db/04-access.md`
-- UI не создаёт SpecialCase; не меняет hash/raw parser fields
+- Auth оператора (AD/SSO/forms)
+- Token SHA-256 + TTL как gate Error Processing
+- Отдельные SQL login-роли / жёсткая матрица `docs/db/04-access.md` на стенде
+- Маскирование чувствительных данных в логах
 
-### 7.3. Защита
+### 7.2. Допустимые гигиены кода (не security-эпик)
 
 - Параметризованный SQL (Dapper)
-- Antiforgery на POST форм
-- XSS: Razor encoding; UserValue как текст
-- Не логировать raw token
-- Секреты: User Secrets / env / vault; не в git
-- Лимит размера upload (RequestSizeLimit + MaxFileSizeBytes)
-- CSRF + SameSite cookies при forms auth (когда появится)
+- Antiforgery Razor по умолчанию
+- Encoding Razor для текста
+- Секреты connection string / RMQ не в git
+- RequestSizeLimit upload
 
 ---
 
@@ -553,20 +555,19 @@ Razor Pages + минимальный JS для DnD (без SPA). Визуал Sp
 
 ### 10.4. Порядок внедрения
 
-1. Retarget / создать projects на **net8.0** (рекомендуется сразу) или net5 → net8 отдельной задачей до prod.  
+1. Создать projects Domain/Application/Infrastructure на **net5.0** (тот же TFM, что UI).  
 2. Применить `docs/db/05-ddl.sql` на dev.  
 3. Infrastructure adapters + DI.  
 4. Upload page + UC-01/02.  
-5. Special Case pages + UC-03/04.  
-6. Seed ListType / UC-05 проверка.
+5. Error Processing pages + UC-03/04.  
+6. Seed ListType / UC-05 проверка.  
+7. (Отложенный эпик) Миграция net5 → net8 — вне текущего плана.
 
-### 10.5. Миграция net5 → net8
+### 10.5. Миграция net5 → net8 (отложено)
 
-**Решение архитектуры:** целевой TFM решения — **net8.0**. Каркас net5 не сохранять как prod baseline.
+**Решение product owner (15.07.2026):** целевой TFM текущего плана — **net5.0**. Миграция на net8 **не входит** в задачи 1.1–4.2.
 
-**Обоснование:** EOS net5; LTS net8; совместимость пакетов SqlClient/RabbitMQ.Client; снижение security debt.
-
-**Шаги:** создать classlib net8; перенести UI на `Microsoft.NET.Sdk.Web` net8; заменить устаревший `Startup` pattern на minimal hosting при касании Program; прогнать smoke upload/special-case на stage.
+**Tech debt:** net5 EOS; рекомендуется отдельный эпик на net8.0 LTS до/после prod по решению владельца.
 
 ---
 
@@ -577,7 +578,7 @@ Razor Pages + минимальный JS для DnD (без SPA). Визуал Sp
 | EC-01/02 | FC-UploadShellValidation + FileShare stream copy; запрет парсеров содержимого |
 | EC-03 | нет HTTP клиента парсера; только RMQ publish |
 | EC-04 | UncFileShareStore + RabbitMqUploadNotifier |
-| EC-05 | SpecialCase только через ISpecialCaseStore/SQL |
+| EC-05 | ErrorProcessingCase только через IErrorProcessingStore/SQL |
 | EC-06 | ListType справочник + seed MVK/TERRORISTS |
 | EC-07 | placeholder Razor layout без отдельного UX-проекта |
 | EC-08 | порядок в UploadRestrictFileCommand; publish только после WriteAsIs success |
@@ -589,7 +590,7 @@ Razor Pages + минимальный JS для DnD (без SPA). Визуал Sp
 Блокирующих вопросов **нет**.
 
 `deferred-ops` (из ТЗ, не блокируют планирование кода):
-1. Prod auth оператора (AD/SSO/forms).
+1. **Security epic:** auth оператора; token/TTL Error Processing; SQL-роли; маскирование логов.
 2. Точные UNC/учётки по стендам.
 3. Финальные имена RMQ exchange/queue/vhost.
 4. Префикс routing key по стенду.

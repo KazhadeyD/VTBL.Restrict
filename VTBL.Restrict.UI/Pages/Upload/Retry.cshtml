@@ -1,0 +1,20 @@
+@page "/Upload/Retry"
+@model VTBL.Restrict.UI.Pages.Upload.RetryModel
+@{
+    ViewData["Title"] = "Повтор уведомления";
+}
+
+<h1>Повтор уведомления</h1>
+
+@if (!string.IsNullOrEmpty(Model.ResultMessage))
+{
+    <div class="alert @(Model.IsSuccess ? "alert-success" : "alert-danger")" role="alert">
+        @Model.ResultMessage
+        @if (!string.IsNullOrEmpty(Model.CorrelationIdText))
+        {
+            <div><small>correlationId: @Model.CorrelationIdText</small></div>
+        }
+    </div>
+}
+
+<p><a asp-page="/Upload/Index">Вернуться к загрузке</a></p>
