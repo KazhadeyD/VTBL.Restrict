@@ -20,6 +20,7 @@ namespace VTBL.Restrict.Application.Tests.ListTypes
 
             Assert.Contains(active, x => x.Code == "MVK");
             Assert.Contains(active, x => x.Code == "TERRORISTS");
+            Assert.Contains(active, x => x.Code == "NFA");
             Assert.DoesNotContain(active, x => x.Code == "OTHER");
             Assert.All(active, x => Assert.True(x.IsActive));
         }

@@ -85,6 +85,17 @@ namespace VTBL.Restrict.Application.Observability
 
             return logger.BeginScope(state);
         }
+
+        /// <summary>
+        /// Скоуп списка Pending Error Processing (без caseId; count — в обычном логе success).
+        /// </summary>
+        public static IDisposable BeginList(ILogger logger)
+        {
+            return logger.BeginScope(new Dictionary<string, object>
+            {
+                [KeyOperation] = "list"
+            });
+        }
     }
 
     /// <summary>

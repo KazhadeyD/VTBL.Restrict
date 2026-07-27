@@ -13,7 +13,7 @@ using Xunit;
 namespace VTBL.Restrict.Application.Tests.ErrorProcessing
 {
     /// <summary>
-    /// TC-UNIT (task 3.1): Get by caseId, SortOrder, no filesystem.
+    /// TC-UNIT: Get by caseId, SortOrder, Db-failure vs status refusals.
     /// </summary>
     public sealed class GetErrorProcessingForOperatorQueryTests
     {
@@ -21,6 +21,8 @@ namespace VTBL.Restrict.Application.Tests.ErrorProcessing
         public async Task ExecuteAsync_Pending_MapsItemsBySortOrder()
         {
             var caseId = Guid.NewGuid();
+            var createdAt = new DateTime(2026, 7, 10, 8, 0, 0, DateTimeKind.Utc);
+            var correlationId = Guid.NewGuid();
             var store = new InMemoryErrorProcessingCaseStore();
             store.Seed(CreateCase(
                 caseId,
@@ -29,7 +31,9 @@ namespace VTBL.Restrict.Application.Tests.ErrorProcessing
                 {
                     CreateItem(Guid.NewGuid(), "B_FIELD", 20),
                     CreateItem(Guid.NewGuid(), "A_FIELD", 10)
-                }));
+                },
+                createdAtUtc: createdAt,
+                uploadCorrelationId: correlationId));
 
             var query = new GetErrorProcessingForOperatorQuery(store);
             var result = await query.ExecuteAsync(caseId, "ignored-token", CancellationToken.None);
@@ -38,6 +42,8 @@ namespace VTBL.Restrict.Application.Tests.ErrorProcessing
             Assert.False(result.View.IsReadOnly);
             Assert.Equal(new[] { "A_FIELD", "B_FIELD" }, result.View.Items.Select(i => i.FieldCode).ToArray());
             Assert.Equal(new[] { 10, 20 }, result.View.Items.Select(i => i.SortOrder).ToArray());
+            Assert.Equal(createdAt, result.View.CreatedAtUtc);
+            Assert.Equal(correlationId, result.View.UploadCorrelationId);
         }
 
         [Fact]
@@ -82,8 +88,11 @@ namespace VTBL.Restrict.Application.Tests.ErrorProcessing
             Assert.Equal(ErrorProcessingCaseAccessResult.ReasonUnavailable, result.FailureReason);
         }
 
+        /// <summary>
+        /// TC-UNIT-04: Expired → Unavailable (регресс); не путать с Db.
+        /// </summary>
         [Fact]
-        public async Task ExecuteAsync_Expired_Unavailable()
+        public async Task ExecuteAsync_Expired_Unavailable_NotDb()
         {
             var caseId = Guid.NewGuid();
             var store = new InMemoryErrorProcessingCaseStore();
@@ -94,6 +103,47 @@ namespace VTBL.Restrict.Application.Tests.ErrorProcessing
 
             Assert.False(result.Succeeded);
             Assert.Equal(ErrorProcessingCaseAccessResult.ReasonUnavailable, result.FailureReason);
+            Assert.NotEqual(ErrorProcessingCaseAccessResult.ReasonDb, result.FailureReason);
+        }
+
+        /// <summary>
+        /// TC-UNIT-03: store throws → DbError; Expired/Cancelled → Unavailable (не Db); Pending — Ok.
+        /// </summary>
+        [Fact]
+        public async Task ExecuteAsync_StoreThrows_ReturnsDbError_DistinctFromUnavailable()
+        {
+            var pendingId = Guid.NewGuid();
+            var expiredId = Guid.NewGuid();
+            var cancelledId = Guid.NewGuid();
+            var inner = new InMemoryErrorProcessingCaseStore();
+            inner.Seed(CreateCase(pendingId, ErrorProcessingStatus.Pending, new[]
+            {
+                CreateItem(Guid.NewGuid(), "OK", 1)
+            }));
+            inner.Seed(CreateCase(expiredId, ErrorProcessingStatus.Expired, Array.Empty<ErrorProcessingItemRecord>()));
+            inner.Seed(CreateCase(cancelledId, ErrorProcessingStatus.Cancelled, Array.Empty<ErrorProcessingItemRecord>()));
+
+            var throwing = new ThrowingGetErrorProcessingStore(inner, throwForCaseId: Guid.NewGuid());
+            var query = new GetErrorProcessingForOperatorQuery(throwing);
+
+            var dbResult = await query.ExecuteAsync(throwing.FaultCaseId, "secret-token-XYZ", CancellationToken.None);
+            Assert.False(dbResult.Succeeded);
+            Assert.Equal(ErrorProcessingCaseAccessResult.ReasonDb, dbResult.FailureReason);
+            Assert.Null(dbResult.View);
+
+            var expired = await query.ExecuteAsync(expiredId, null, CancellationToken.None);
+            Assert.False(expired.Succeeded);
+            Assert.Equal(ErrorProcessingCaseAccessResult.ReasonUnavailable, expired.FailureReason);
+            Assert.NotEqual(ErrorProcessingCaseAccessResult.ReasonDb, expired.FailureReason);
+
+            var cancelled = await query.ExecuteAsync(cancelledId, null, CancellationToken.None);
+            Assert.False(cancelled.Succeeded);
+            Assert.Equal(ErrorProcessingCaseAccessResult.ReasonUnavailable, cancelled.FailureReason);
+
+            var ok = await query.ExecuteAsync(pendingId, null, CancellationToken.None);
+            Assert.True(ok.Succeeded);
+            Assert.Equal(ErrorProcessingStatus.Pending, ok.View.Status);
+            Assert.False(ok.View.IsReadOnly);
         }
 
         [Fact]
@@ -128,7 +178,9 @@ namespace VTBL.Restrict.Application.Tests.ErrorProcessing
         private static ErrorProcessingCaseRecord CreateCase(
             Guid id,
             ErrorProcessingStatus status,
-            IEnumerable<ErrorProcessingItemRecord> items)
+            IEnumerable<ErrorProcessingItemRecord> items,
+            DateTime? createdAtUtc = null,
+            Guid? uploadCorrelationId = null)
         {
             return new ErrorProcessingCaseRecord
             {
@@ -137,6 +189,8 @@ namespace VTBL.Restrict.Application.Tests.ErrorProcessing
                 ListTypeCode = "MVK",
                 ListTypeName = "МВК",
                 Status = status,
+                CreatedAtUtc = createdAtUtc ?? DateTime.UtcNow.AddHours(-1),
+                UploadCorrelationId = uploadCorrelationId,
                 ExpiresAtUtc = DateTime.UtcNow.AddDays(1),
                 SourceFilePath = @"\\parser\stored\path.xlsx",
                 Items = items.ToList()
@@ -154,6 +208,45 @@ namespace VTBL.Restrict.Application.Tests.ErrorProcessing
                 IsRequired = true,
                 SortOrder = sort
             };
+        }
+
+        /// <summary>
+        /// Store: GetById throws for FaultCaseId; иначе делегирует inner.
+        /// </summary>
+        private sealed class ThrowingGetErrorProcessingStore : IErrorProcessingStore
+        {
+            private readonly IErrorProcessingStore _inner;
+
+            public ThrowingGetErrorProcessingStore(IErrorProcessingStore inner, Guid throwForCaseId)
+            {
+                _inner = inner;
+                FaultCaseId = throwForCaseId;
+            }
+
+            public Guid FaultCaseId { get; }
+
+            public Task<ErrorProcessingCaseRecord> GetByIdAsync(
+                Guid errorProcessingCaseId,
+                CancellationToken cancellationToken)
+            {
+                if (errorProcessingCaseId == FaultCaseId)
+                {
+                    throw new InvalidOperationException("simulated get db failure");
+                }
+
+                return _inner.GetByIdAsync(errorProcessingCaseId, cancellationToken);
+            }
+
+            public Task<IReadOnlyList<ErrorProcessingCaseSummaryRecord>> ListPendingSummariesAsync(
+                CancellationToken cancellationToken) =>
+                _inner.ListPendingSummariesAsync(cancellationToken);
+
+            public Task<bool> ResolveAsync(
+                Guid errorProcessingCaseId,
+                IReadOnlyDictionary<Guid, string> itemUserValues,
+                string resolvedBy,
+                CancellationToken cancellationToken) =>
+                _inner.ResolveAsync(errorProcessingCaseId, itemUserValues, resolvedBy, cancellationToken);
         }
     }
 }

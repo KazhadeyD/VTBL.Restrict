@@ -15,7 +15,7 @@ namespace VTBL.Restrict.Tests.E2E
 {
     /// <summary>
     /// TC-E2E-01/02 (task 2.1): Upload page + validation без вызова file share.
-    /// ListType через InMemory seed (MVK/TERRORISTS) при пустом RestrictDb.
+    /// ListType через InMemory seed (MVK/TERRORISTS/NFA) при пустом RestrictDb.
     /// </summary>
     public sealed class UploadShellE2ETests : IClassFixture<RestrictWebAppFactory>
     {
@@ -36,8 +36,10 @@ namespace VTBL.Restrict.Tests.E2E
             var decoded = System.Net.WebUtility.HtmlDecode(html);
             Assert.Contains("value=\"MVK\"", decoded);
             Assert.Contains("value=\"TERRORISTS\"", decoded);
+            Assert.Contains("value=\"NFA\"", decoded);
             Assert.Contains("МВК", decoded);
             Assert.Contains("Террористы", decoded);
+            Assert.Contains("Нелегальная финансовая деятельность", decoded);
             Assert.DoesNotContain("value=\"OTHER\"", decoded);
         }
 

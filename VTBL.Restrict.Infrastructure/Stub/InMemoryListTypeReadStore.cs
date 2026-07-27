@@ -16,7 +16,7 @@ namespace VTBL.Restrict.Infrastructure.Stub
         private readonly List<ListTypeInfo> _items;
 
         /// <summary>
-        /// Seed по умолчанию (MVK/TERRORISTS active, OTHER inactive).
+        /// Seed по умолчанию (MVK/TERRORISTS/NFA active, OTHER inactive).
         /// </summary>
         public InMemoryListTypeReadStore()
             : this(CreateDefaultSeed())
@@ -79,6 +79,15 @@ namespace VTBL.Restrict.Infrastructure.Stub
             yield return new ListTypeInfo
             {
                 ListTypeId = 3,
+                Code = "NFA",
+                Name = "Нелегальная финансовая деятельность",
+                FolderSegment = "nfa",
+                RoutingKeySuffix = "nfa",
+                IsActive = true
+            };
+            yield return new ListTypeInfo
+            {
+                ListTypeId = 4,
                 Code = "OTHER",
                 Name = "Прочее",
                 FolderSegment = "other",

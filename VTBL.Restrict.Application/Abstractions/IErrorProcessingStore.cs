@@ -14,6 +14,13 @@ namespace VTBL.Restrict.Application.Abstractions
         Task<ErrorProcessingCaseRecord> GetByIdAsync(Guid errorProcessingCaseId, CancellationToken cancellationToken);
 
         /// <summary>
+        /// Список кейсов со Status = Pending (NVARCHAR, ordinal ignore case), ORDER BY CreatedAt DESC.
+        /// Join ListType (Code, Name). Items не загружать. ExpiresAt не фильтровать.
+        /// </summary>
+        Task<IReadOnlyList<ErrorProcessingCaseSummaryRecord>> ListPendingSummariesAsync(
+            CancellationToken cancellationToken);
+
+        /// <summary>
         /// Атомарно сохраняет UserValue и переводит Pending → ResolvedByUser.
         /// Не трогает RawValue / ParserMessage / AccessTokenHash. Без ExpiresAt/token gate.
         /// </summary>
@@ -25,6 +32,20 @@ namespace VTBL.Restrict.Application.Abstractions
             CancellationToken cancellationToken);
     }
 
+    /// <summary>
+    /// Краткая строка Pending-кейса для списка Error Processing (без Items).
+    /// </summary>
+    public sealed class ErrorProcessingCaseSummaryRecord
+    {
+        public Guid ErrorProcessingCaseId { get; set; }
+        public string ListTypeCode { get; set; }
+        public string ListTypeName { get; set; }
+        public ErrorProcessingStatus Status { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime ExpiresAtUtc { get; set; }
+        public string SourceFilePath { get; set; }
+    }
+
     public sealed class ErrorProcessingCaseRecord
     {
         public Guid ErrorProcessingCaseId { get; set; }
@@ -33,6 +54,8 @@ namespace VTBL.Restrict.Application.Abstractions
         public string ListTypeName { get; set; }
         public byte[] AccessTokenHash { get; set; }
         public ErrorProcessingStatus Status { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public Guid? UploadCorrelationId { get; set; }
         public DateTime ExpiresAtUtc { get; set; }
         public string SourceFilePath { get; set; }
         public IReadOnlyList<ErrorProcessingItemRecord> Items { get; set; }

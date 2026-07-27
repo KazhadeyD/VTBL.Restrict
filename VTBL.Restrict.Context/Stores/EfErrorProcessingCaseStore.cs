@@ -57,10 +57,23 @@ namespace VTBL.Restrict.Context.Stores
                 ListTypeName = entity.ListType?.Name,
                 AccessTokenHash = entity.AccessTokenHash,
                 Status = ParseStatus(entity.Status),
+                // CreatedAtUtc / UploadCorrelationId — default; маппинг в EP-2.2
                 ExpiresAtUtc = entity.ExpiresAt,
                 SourceFilePath = entity.SourceFilePath,
                 Items = items
             };
+        }
+
+        /// <summary>
+        /// Stub EP-1.1: пустой список. Реальная выборка Pending + ORDER BY CreatedAt — EP-2.2.
+        /// </summary>
+        public Task<IReadOnlyList<ErrorProcessingCaseSummaryRecord>> ListPendingSummariesAsync(
+            CancellationToken cancellationToken)
+        {
+            _ = cancellationToken;
+            IReadOnlyList<ErrorProcessingCaseSummaryRecord> empty =
+                Array.Empty<ErrorProcessingCaseSummaryRecord>();
+            return Task.FromResult(empty);
         }
 
         public async Task<bool> ResolveAsync(

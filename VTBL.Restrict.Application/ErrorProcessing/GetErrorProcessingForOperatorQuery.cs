@@ -53,44 +53,59 @@ namespace VTBL.Restrict.Application.ErrorProcessing
                     return ErrorProcessingCaseAccessResult.NotFound();
                 }
 
-                var record = await _store.GetByIdAsync(caseId, cancellationToken).ConfigureAwait(false);
-                if (record == null)
+                try
                 {
-                    _logger.LogWarning(
-                        "ErrorProcessing open failed caseId={CaseId} reason={Reason} tokenPresent={TokenPresent}",
-                        caseId,
-                        ErrorProcessingCaseAccessResult.ReasonNotFound,
-                        SensitiveLog.DescribeTokenPresence(rawToken));
-                    return ErrorProcessingCaseAccessResult.NotFound();
-                }
+                    var record = await _store.GetByIdAsync(caseId, cancellationToken).ConfigureAwait(false);
+                    if (record == null)
+                    {
+                        _logger.LogWarning(
+                            "ErrorProcessing open failed caseId={CaseId} reason={Reason} tokenPresent={TokenPresent}",
+                            caseId,
+                            ErrorProcessingCaseAccessResult.ReasonNotFound,
+                            SensitiveLog.DescribeTokenPresence(rawToken));
+                        return ErrorProcessingCaseAccessResult.NotFound();
+                    }
 
-                if (record.Status == ErrorProcessingStatus.Expired ||
-                    record.Status == ErrorProcessingStatus.Cancelled)
+                    if (record.Status == ErrorProcessingStatus.Expired ||
+                        record.Status == ErrorProcessingStatus.Cancelled)
+                    {
+                        _logger.LogWarning(
+                            "ErrorProcessing open failed caseId={CaseId} listType={ListType} reason={Reason} tokenPresent={TokenPresent}",
+                            caseId,
+                            record.ListTypeCode,
+                            ErrorProcessingCaseAccessResult.ReasonUnavailable,
+                            SensitiveLog.DescribeTokenPresence(rawToken));
+                        return ErrorProcessingCaseAccessResult.Unavailable();
+                    }
+
+                    var isReadOnly = record.Status == ErrorProcessingStatus.ResolvedByUser;
+                    var view = MapView(record, isReadOnly);
+
+                    using (OperationLogScope.BeginOpen(_logger, caseId, record.ListTypeCode))
+                    {
+                        _logger.LogInformation(
+                            "ErrorProcessing open succeeded caseId={CaseId} listType={ListType} status={Status} readOnly={ReadOnly} tokenPresent={TokenPresent}",
+                            caseId,
+                            record.ListTypeCode,
+                            record.Status,
+                            isReadOnly,
+                            SensitiveLog.DescribeTokenPresence(rawToken));
+                    }
+
+                    return ErrorProcessingCaseAccessResult.Ok(view);
+                }
+                catch (Exception ex)
                 {
-                    _logger.LogWarning(
-                        "ErrorProcessing open failed caseId={CaseId} listType={ListType} reason={Reason} tokenPresent={TokenPresent}",
+                    _logger.LogError(
+                        ex,
+                        "ErrorProcessing open failed caseId={CaseId} reason={Reason} errorCode={ErrorCode} tokenPresent={TokenPresent}",
                         caseId,
-                        record.ListTypeCode,
-                        ErrorProcessingCaseAccessResult.ReasonUnavailable,
+                        ErrorProcessingCaseAccessResult.ReasonDb,
+                        ErrorProcessingErrorCodes.Db,
                         SensitiveLog.DescribeTokenPresence(rawToken));
-                    return ErrorProcessingCaseAccessResult.Unavailable();
+
+                    return ErrorProcessingCaseAccessResult.DbError();
                 }
-
-                var isReadOnly = record.Status == ErrorProcessingStatus.ResolvedByUser;
-                var view = MapView(record, isReadOnly);
-
-                using (OperationLogScope.BeginOpen(_logger, caseId, record.ListTypeCode))
-                {
-                    _logger.LogInformation(
-                        "ErrorProcessing open succeeded caseId={CaseId} listType={ListType} status={Status} readOnly={ReadOnly} tokenPresent={TokenPresent}",
-                        caseId,
-                        record.ListTypeCode,
-                        record.Status,
-                        isReadOnly,
-                        SensitiveLog.DescribeTokenPresence(rawToken));
-                }
-
-                return ErrorProcessingCaseAccessResult.Ok(view);
             }
         }
 
@@ -118,6 +133,8 @@ namespace VTBL.Restrict.Application.ErrorProcessing
                 ListTypeCode = record.ListTypeCode,
                 ListTypeName = record.ListTypeName,
                 Status = record.Status,
+                CreatedAtUtc = record.CreatedAtUtc,
+                UploadCorrelationId = record.UploadCorrelationId,
                 ExpiresAtUtc = record.ExpiresAtUtc,
                 SourceFilePath = record.SourceFilePath,
                 IsReadOnly = isReadOnly,

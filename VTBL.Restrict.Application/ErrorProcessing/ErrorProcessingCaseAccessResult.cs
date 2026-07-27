@@ -11,6 +11,7 @@ namespace VTBL.Restrict.Application.ErrorProcessing
     {
         public const string ReasonNotFound = "NotFound";
         public const string ReasonUnavailable = "Unavailable";
+        public const string ReasonDb = "Db";
 
         public bool Succeeded { get; private set; }
         public string FailureReason { get; private set; }
@@ -42,6 +43,18 @@ namespace VTBL.Restrict.Application.ErrorProcessing
                 FailureReason = ReasonUnavailable
             };
         }
+
+        /// <summary>
+        /// Ошибка доступа к БД при открытии кейса (обработка в Get — EP-2.3).
+        /// </summary>
+        public static ErrorProcessingCaseAccessResult DbError()
+        {
+            return new ErrorProcessingCaseAccessResult
+            {
+                Succeeded = false,
+                FailureReason = ReasonDb
+            };
+        }
     }
 
     /// <summary>
@@ -53,6 +66,8 @@ namespace VTBL.Restrict.Application.ErrorProcessing
         public string ListTypeCode { get; set; }
         public string ListTypeName { get; set; }
         public ErrorProcessingStatus Status { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public Guid? UploadCorrelationId { get; set; }
         public DateTime ExpiresAtUtc { get; set; }
         public string SourceFilePath { get; set; }
         public bool IsReadOnly { get; set; }

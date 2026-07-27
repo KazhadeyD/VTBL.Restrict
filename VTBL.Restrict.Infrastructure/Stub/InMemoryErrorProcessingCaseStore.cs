@@ -43,6 +43,36 @@ namespace VTBL.Restrict.Infrastructure.Stub
             return Task.FromResult(found == null ? null : Clone(found));
         }
 
+        /// <summary>
+        /// Pending summary: фильтр Status=Pending (ignore case), ORDER BY CreatedAtUtc DESC;
+        /// без Items; ExpiresAt не фильтруется.
+        /// </summary>
+        public Task<IReadOnlyList<ErrorProcessingCaseSummaryRecord>> ListPendingSummariesAsync(
+            CancellationToken cancellationToken)
+        {
+            _ = cancellationToken;
+
+            IReadOnlyList<ErrorProcessingCaseSummaryRecord> items = _cases.Values
+                .Where(c => string.Equals(
+                    c.Status.ToString(),
+                    "Pending",
+                    StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(c => c.CreatedAtUtc)
+                .Select(c => new ErrorProcessingCaseSummaryRecord
+                {
+                    ErrorProcessingCaseId = c.ErrorProcessingCaseId,
+                    ListTypeCode = c.ListTypeCode,
+                    ListTypeName = c.ListTypeName,
+                    Status = c.Status,
+                    CreatedAtUtc = c.CreatedAtUtc,
+                    ExpiresAtUtc = c.ExpiresAtUtc,
+                    SourceFilePath = c.SourceFilePath
+                })
+                .ToList();
+
+            return Task.FromResult(items);
+        }
+
         public Task<bool> ResolveAsync(
             Guid errorProcessingCaseId,
             IReadOnlyDictionary<Guid, string> itemUserValues,
@@ -96,6 +126,8 @@ namespace VTBL.Restrict.Infrastructure.Stub
                     ? null
                     : (byte[])source.AccessTokenHash.Clone(),
                 Status = source.Status,
+                CreatedAtUtc = source.CreatedAtUtc,
+                UploadCorrelationId = source.UploadCorrelationId,
                 ExpiresAtUtc = source.ExpiresAtUtc,
                 SourceFilePath = source.SourceFilePath,
                 Items = source.Items?.Select(CloneItem).ToList() ?? new List<ErrorProcessingItemRecord>()

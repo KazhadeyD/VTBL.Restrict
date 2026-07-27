@@ -25,11 +25,20 @@ docker compose up -d
 
 1. `docker/mssql/init/01-create-database.sql`
 2. `docker/mssql/init/02-schema.sql` (копия `docs/db/05-ddl.sql` — при смене DDL синхронизируй оба)
+3. `docker/mssql/init/03-rc-list-entry.sql`
+4. `docker/mssql/init/04-ep-index-status-createdat.sql` — идемпотентный index-patch (`IX_ErrorProcessingCase_Status_CreatedAt`); канон: `docs/db/migrations/20260715_IX_ErrorProcessingCase_Status_CreatedAt.sql`
+
+На уже существующем volume (без recreate) примени migration с хоста или перезапусти `mssql-init`:
+
+```bash
+sqlcmd -S localhost,1434 -U sa -P "ChangeMe_Str0ng!" -C -i docs/db/migrations/20260715_IX_ErrorProcessingCase_Status_CreatedAt.sql
+```
 
 Проверка с хоста:
 
 ```bash
 sqlcmd -S localhost,1434 -U sa -P "ChangeMe_Str0ng!" -C -d VTBL_Restrict -Q "SELECT Code FROM [restrict].ListType;"
+sqlcmd -S localhost,1434 -U sa -P "ChangeMe_Str0ng!" -C -d VTBL_Restrict -Q "SELECT name FROM sys.indexes WHERE object_id = OBJECT_ID(N'[restrict].[ErrorProcessingCase]');"
 ```
 
 Остановка:
@@ -78,6 +87,7 @@ dotnet run --project VTBL.Restrict.UI --urls http://localhost:5000
 
 - `/Upload` — загрузка
 - `/Upload/Retry` — повтор RMQ по `correlationId`
+- `/error-processing` — список Pending-кейсов (navbar «Обработка ошибок»)
 - `/error-processing/{caseId}` — обработка ошибок (по `caseId`; query `token` игнорируется)
 
 ## 4. Режимы DI (кратко)

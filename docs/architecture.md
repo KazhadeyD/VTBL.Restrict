@@ -1,8 +1,8 @@
 # Архитектура: VTBL.Restrict.UI
 
-**Дата:** 15.07.2026  
-**Статус:** утверждена (этап Архитектуры); versioned-копия в git (15.07.2026)  
-**ТЗ:** `docs/implementation/technical_specification.md` (EC-01…EC-08 приняты; пайплайн-артефакт локально)  
+**Дата:** 15.07.2026
+**Статус:** утверждена (этап Архитектуры); versioned-копия в git (15.07.2026)
+**ТЗ:** `docs/implementation/technical_specification.md` (EC-01…EC-08 приняты; пайплайн-артефакт локально)
 **Контекст:** каркас `VTBL.Restrict.UI` (net5.0 Razor Pages); DDL/модель — `docs/db/`; интеграция — `docs/integration-file-rmq.md`
 
 ---
@@ -162,16 +162,17 @@ flowchart TB
 
 #### C-UI Host (`VTBL.Restrict.UI`)
 
-**Тип:** Web host  
-**Технологии:** ASP.NET Core Razor Pages  
-**Реализует:** отображение Upload / Error Processing placeholder / Invalid link; mapping ошибок UC-02  
-**Входящие:** HTTP от оператора  
-**Исходящие:** Application services  
+**Тип:** Web host
+**Технологии:** ASP.NET Core Razor Pages
+**Реализует:** отображение Upload / Error Processing (usable Razor: список + кейс) / Invalid link; mapping ошибок UC-02
+**Входящие:** HTTP от оператора
+**Исходящие:** Application services
 
 Страницы (маршруты):
 - `/` или `/upload` — загрузка
 - POST retry notify (по UploadBatchId / CorrelationId)
-- `/error-processing/{caseId}` — кейс + `?token=`
+- `/error-processing` — список Pending-кейсов (navbar «Обработка ошибок»)
+- `/error-processing/{caseId}` — кейс + `?token=` (token не валидируется)
 - состояние отказа на том же маршруте или `/error-processing/invalid`
 
 #### C-Application
@@ -255,7 +256,7 @@ validate meta
 → UI ack (не ждёт парсер)
 ```
 
-При ошибке записи на шару: RMQ не вызывать; temp удалить.  
+При ошибке записи на шару: RMQ не вызывать; temp удалить.
 
 **Orphan после успешного WriteAsIs при сбое INSERT UploadBatch (MVP):** файл на шаре **не** удаляется автоматически; RMQ **не** публикуется; оператору — ошибка инфраструктуры с `correlationId` и путём в логах (не обязательно в UI целиком); зачистка — зона поддержки. Обоснование: silent delete может скрыть единственную копию входного файла.
 
@@ -285,23 +286,23 @@ GET caseId → load DB only → edit → transactional resolve (token query igno
 ### 4.1. Концептуальная модель
 
 ##### ListType
-Справочник типов списков (MVK, TERRORISTS, …).  
-Атрибуты: ListTypeId, Code, Name, FolderSegment, RoutingKeySuffix, IsActive, CreatedAt.  
+Справочник типов списков (MVK, TERRORISTS, …).
+Атрибуты: ListTypeId, Code, Name, FolderSegment, RoutingKeySuffix, IsActive, CreatedAt.
 Правила: UI показывает только IsActive=1; Code стабилен для RMQ `listType`.
 
 ##### UploadBatch
-Факт выкладки UI.  
-Атрибуты: UploadBatchId, CorrelationId (UK), ListTypeId, OriginalFileName, StoredFilePath, UploadedBy, UploadedAt, NotifyStatus ∈ {Pending, Published, Failed}.  
+Факт выкладки UI.
+Атрибуты: UploadBatchId, CorrelationId (UK), ListTypeId, OriginalFileName, StoredFilePath, UploadedBy, UploadedAt, NotifyStatus ∈ {Pending, Published, Failed}.
 Правила: создаётся UI после успешной записи файла; retry меняет только NotifyStatus и повторно публикует.
 
 ##### ErrorProcessingCase
-Кейс ручной обработки.  
-Атрибуты: ErrorProcessingCaseId, ListTypeId, UploadCorrelationId?, AccessTokenHash (SHA-256), Status ∈ {Pending, ResolvedByUser, Expired, Cancelled}, ExpiresAt, SourceFilePath? (текст), audit fields.  
+Кейс ручной обработки.
+Атрибуты: ErrorProcessingCaseId, ListTypeId, UploadCorrelationId?, AccessTokenHash (SHA-256), Status ∈ {Pending, ResolvedByUser, Expired, Cancelled}, ExpiresAt, SourceFilePath? (текст), audit fields.
 Правила: UI не INSERT; resolve только Pending + not expired; token в БД только hash.
 
 ##### ErrorProcessingItem
-Проблемные поля.  
-Атрибуты: ErrorProcessingItemId, ErrorProcessingCaseId, FieldCode, RowNumber?, RawValue?, ParserMessage?, UserValue?, IsRequired, SortOrder.  
+Проблемные поля.
+Атрибуты: ErrorProcessingItemId, ErrorProcessingCaseId, FieldCode, RowNumber?, RawValue?, ParserMessage?, UserValue?, IsRequired, SortOrder.
 Правила: UI обновляет только UserValue; при IsRequired UserValue обязателен на resolve.
 
 **Связи:** ListType 1—N UploadBatch; ListType 1—N ErrorProcessingCase; ErrorProcessingCase 1—N ErrorProcessingItem.
@@ -331,7 +332,7 @@ GET caseId → load DB only → edit → transactional resolve (token query igno
 
 ### 4.4. Миграции и версионирование
 
-- Исходный скрипт: `docs/db/05-ddl.sql` (+ seed MVK/TERRORISTS).
+- Исходный скрипт: `docs/db/05-ddl.sql` (+ seed MVK/TERRORISTS/NFA).
 - Применение на стендах: ручной DBA / sqlcmd на MVP; при необходимости позже — DbUp/FluentMigrator (не блокер).
 - Изменения схемы после MVP — версионируемые скрипты в `docs/db/migrations/` (появится при необходимости).
 - UI использует роль `restrict_ui` (`docs/db/04-access.md`): нет CREATE ErrorProcessingCase; нет UPDATE AccessTokenHash/RawValue/ParserMessage.
@@ -345,7 +346,7 @@ GET caseId → load DB only → edit → transactional resolve (token query igno
 | Update notify | `UPDATE NotifyStatus` |
 | Get batch by CorrelationId | для Retry |
 | Get case + items | JOIN / 2 queries by ErrorProcessingCaseId |
-| Resolve | transaction: UPDATE items UserValue; UPDATE case Status/Resolved* WHERE Status=Pending AND ExpiresAt>UtcNow |
+| Resolve | transaction: UPDATE items UserValue; UPDATE case Status/Resolved* WHERE Status=Pending (**superseded:** `ExpiresAt>UtcNow` не gate UI до security-эпика) |
 
 ---
 
@@ -360,6 +361,7 @@ UI — server-rendered Razor Pages (+ form POST). Отдельного публ�
 | `/upload` (или `/`) | GET | форма: ListType + DnD/file + Отправить | UC-01 |
 | `/upload` | POST multipart | upload command | UC-01 |
 | `/upload/retry` | POST | retry notify по CorrelationId | UC-01 А3 |
+| `/error-processing` | GET | список Pending-кейсов | UC-EP-01 |
 | `/error-processing/{caseId}?token=` | GET | форма кейса / отказ / read-only | UC-03/04 |
 | `/error-processing/{caseId}?token=` | POST | resolve | UC-03 |
 
@@ -368,7 +370,7 @@ UI — server-rendered Razor Pages (+ form POST). Отдельного публ�
 ### 5.2. Внутренние порты Application
 
 ##### IFileShareStore
-- `Task<string> WriteAsIsAsync(Stream content, string targetFullPath, CancellationToken ct)`  
+- `Task<string> WriteAsIsAsync(Stream content, string targetFullPath, CancellationToken ct)`
   Реализация: temp рядом + rename; при сбое — удалить temp; **не** читать содержимое для бизнес-логики.
 
 ##### IUploadNotifier
@@ -440,7 +442,7 @@ UI — server-rendered Razor Pages (+ form POST). Отдельного публ�
 
 ### 6.2. Frontend
 
-Razor Pages + минимальный JS для DnD (без SPA). Визуал Error Processing — placeholder (EC-07).
+Razor Pages + минимальный JS для DnD (без SPA). Визуал Error Processing — **usable** Razor (список + кейс), без SPA; детали — `docs/implementation/architecture_error_processing_ui.md` (EC-07).
 
 ### 6.3. Данные и интеграции
 
@@ -525,10 +527,10 @@ Razor Pages + минимальный JS для DnD (без SPA). Визуал Er
 
 ### 10.2. CI/CD (рекомендация)
 
-1. Restore + build solution  
-2. Unit (Application + Domain)  
-3. Integration (Testcontainers/SQL + RMQ mock) по мере появления  
-4. Publish UI  
+1. Restore + build solution
+2. Unit (Application + Domain)
+3. Integration (Testcontainers/SQL + RMQ mock) по мере появления
+4. Publish UI
 5. Применить DDL на стенд (ручной gate на MVP)
 
 ### 10.3. Конфигурация (пример ключей)
@@ -555,12 +557,12 @@ Razor Pages + минимальный JS для DnD (без SPA). Визуал Er
 
 ### 10.4. Порядок внедрения
 
-1. Создать projects Domain/Application/Infrastructure на **net5.0** (тот же TFM, что UI).  
-2. Применить `docs/db/05-ddl.sql` на dev.  
-3. Infrastructure adapters + DI.  
-4. Upload page + UC-01/02.  
-5. Error Processing pages + UC-03/04.  
-6. Seed ListType / UC-05 проверка.  
+1. Создать projects Domain/Application/Infrastructure на **net5.0** (тот же TFM, что UI).
+2. Применить `docs/db/05-ddl.sql` на dev.
+3. Infrastructure adapters + DI.
+4. Upload page + UC-01/02.
+5. Error Processing pages + UC-03/04.
+6. Seed ListType / UC-05 проверка.
 7. (Отложенный эпик) Миграция net5 → net8 — вне текущего плана.
 
 ### 10.5. Миграция net5 → net8 (отложено)
@@ -579,8 +581,8 @@ Razor Pages + минимальный JS для DnD (без SPA). Визуал Er
 | EC-03 | нет HTTP клиента парсера; только RMQ publish |
 | EC-04 | UncFileShareStore + RabbitMqUploadNotifier |
 | EC-05 | ErrorProcessingCase только через IErrorProcessingStore/SQL |
-| EC-06 | ListType справочник + seed MVK/TERRORISTS |
-| EC-07 | placeholder Razor layout без отдельного UX-проекта |
+| EC-06 | ListType справочник + seed MVK/TERRORISTS/NFA |
+| EC-07 | usable Razor (список `/error-processing` + кейс) без отдельного UX-проекта / SPA |
 | EC-08 | порядок в UploadRestrictFileCommand; publish только после WriteAsIs success |
 
 ---

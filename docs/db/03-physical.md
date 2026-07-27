@@ -1,6 +1,6 @@
 # БД Restrict: физическая модель
 
-**Дата:** 14.07.2026  
+**Дата:** 15.07.2026  
 **СУБД:** Microsoft SQL Server  
 **База:** `VTBL_Restrict`  
 **Схема:** `restrict`
@@ -60,7 +60,8 @@
 | ResolvedBy | NVARCHAR(256) | Y | |
 
 Индексы:
-- `IX_ErrorProcessingCase_Status_ExpiresAt` (`Status`, `ExpiresAt`);
+- `IX_ErrorProcessingCase_Status_ExpiresAt` (`Status`, `ExpiresAt`) — expire/jobs;
+- `IX_ErrorProcessingCase_Status_CreatedAt` (`Status`, `CreatedAt DESC`) — список Pending ORDER BY CreatedAt DESC; идемпотентный patch: `docs/db/migrations/20260715_IX_ErrorProcessingCase_Status_CreatedAt.sql` (и docker `04-ep-index-status-createdat.sql`);
 - доступ по Id — PK.
 
 CHECK (рекомендуется): `Status IN ('Pending','ResolvedByUser','Expired','Cancelled')`.

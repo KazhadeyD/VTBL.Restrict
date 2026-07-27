@@ -75,6 +75,19 @@ BEGIN
     );
 
     CREATE INDEX IX_ErrorProcessingCase_Status_ExpiresAt ON [restrict].ErrorProcessingCase (Status, ExpiresAt);
+    CREATE INDEX IX_ErrorProcessingCase_Status_CreatedAt ON [restrict].ErrorProcessingCase (Status, CreatedAt DESC);
+END
+GO
+
+-- Idempotent: applies on existing DBs where CREATE TABLE gate already fired (see also 04-ep-index-status-createdat.sql).
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = N'IX_ErrorProcessingCase_Status_CreatedAt'
+      AND object_id = OBJECT_ID(N'[restrict].[ErrorProcessingCase]')
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_ErrorProcessingCase_Status_CreatedAt
+        ON [restrict].[ErrorProcessingCase] ([Status], [CreatedAt] DESC);
 END
 GO
 
@@ -105,7 +118,8 @@ GO
 MERGE [restrict].ListType AS t
 USING (VALUES
     (N'MVK', N'МВК', N'mvk', N'mvk', 1),
-    (N'TERRORISTS', N'Террористы', N'terrorists', N'terrorists', 1)
+    (N'TERRORISTS', N'Террористы', N'terrorists', N'terrorists', 1),
+    (N'NFA', N'Нелегальная финансовая деятельность', N'nfa', N'nfa', 1)
 ) AS s (Code, Name, FolderSegment, RoutingKeySuffix, IsActive)
 ON t.Code = s.Code
 WHEN NOT MATCHED THEN

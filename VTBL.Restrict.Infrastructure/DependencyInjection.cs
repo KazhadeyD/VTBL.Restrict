@@ -67,6 +67,7 @@ namespace VTBL.Restrict.Infrastructure
             services.AddTransient<UploadRestrictFileCommand>();
             services.AddTransient<RetryUploadNotificationCommand>();
             services.AddTransient<GetErrorProcessingForOperatorQuery>();
+            services.AddTransient<ListPendingErrorProcessingCasesQuery>();
             services.AddTransient<ResolveErrorProcessingCommand>();
 
             return services;

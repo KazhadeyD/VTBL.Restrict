@@ -1,6 +1,6 @@
 # БД Restrict: предметная область
 
-**Дата:** 14.07.2026  
+**Дата:** 14.07.2026
 **Пакет:** [01-domain](01-domain.md) → [02-er](02-er.md) → [03-physical](03-physical.md) → [04-access](04-access.md) → [05-ddl.sql](05-ddl.sql)
 
 ## 1. Цель БД
@@ -62,7 +62,7 @@
 | ResolvedAt / ResolvedBy | UI / оператор |
 
 **Инварианты:**
-- Редактирование UI только при `Status = Pending` и `ExpiresAt > UtcNow`.
+- Редактирование UI только при `Status = Pending` (**superseded до security-эпика:** `ExpiresAt` не используется как gate UI; колонка информативна для будущего TTL/token).
 - Переход в `ResolvedByUser` только после успешного сохранения элементов.
 
 ### 2.4. ErrorProcessingItem
@@ -97,7 +97,7 @@
                   │ Cancelled — админ/парсер (редко)
 ```
 
-Фоновое проставление `Expired` может делать job UI или парсер; UI при открытии всё равно проверяет `ExpiresAt`.
+Фоновое проставление `Expired` может делать job UI или парсер; **до security-эпика** UI при открытии/resolve проверяет только `Status` (не `ExpiresAt`).
 
 ## 4. Владение данными
 

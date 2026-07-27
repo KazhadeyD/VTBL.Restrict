@@ -61,6 +61,42 @@ namespace VTBL.Restrict.Application.Tests.ErrorProcessing
             Assert.Null(after.Items.Single().UserValue);
         }
 
+        /// <summary>
+        /// TC-UNIT-04: Pending без items + пустой ItemUserValues → Success → ResolvedByUser.
+        /// </summary>
+        [Fact]
+        public async Task ExecuteAsync_PendingWithoutItems_Succeeds()
+        {
+            var caseId = Guid.NewGuid();
+            var store = new InMemoryErrorProcessingCaseStore();
+            store.Seed(new ErrorProcessingCaseRecord
+            {
+                ErrorProcessingCaseId = caseId,
+                ListTypeId = 1,
+                ListTypeCode = "MVK",
+                ListTypeName = "МВК",
+                Status = ErrorProcessingStatus.Pending,
+                CreatedAtUtc = DateTime.UtcNow.AddHours(-1),
+                ExpiresAtUtc = DateTime.UtcNow.AddDays(1),
+                SourceFilePath = @"\\share\empty-items.xlsx",
+                Items = Array.Empty<ErrorProcessingItemRecord>()
+            });
+
+            var result = await new ResolveErrorProcessingCommand(store).ExecuteAsync(
+                new ResolveErrorProcessingRequest
+                {
+                    ErrorProcessingCaseId = caseId,
+                    ItemUserValues = new Dictionary<Guid, string>(),
+                    ResolvedBy = "op"
+                },
+                CancellationToken.None);
+
+            Assert.True(result.Success);
+            var after = await store.GetByIdAsync(caseId, CancellationToken.None);
+            Assert.Equal(ErrorProcessingStatus.ResolvedByUser, after.Status);
+            Assert.Empty(after.Items);
+        }
+
         [Fact]
         public async Task ExecuteAsync_AlreadyResolved_Conflict()
         {

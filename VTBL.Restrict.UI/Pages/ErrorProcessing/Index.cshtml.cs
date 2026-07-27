@@ -155,6 +155,11 @@ namespace VTBL.Restrict.UI.Pages.ErrorProcessing
                 return "Кейс недоступен для обработки (истёк или отменён).";
             }
 
+            if (failureReason == ErrorProcessingCaseAccessResult.ReasonDb)
+            {
+                return "Не удалось загрузить данные кейса.";
+            }
+
             return "Ссылка недействительна или кейс не найден.";
         }
 
@@ -169,11 +174,13 @@ namespace VTBL.Restrict.UI.Pages.ErrorProcessing
                 Status = view.Status.ToString(),
                 ExpiresAtUtc = view.ExpiresAtUtc,
                 SourceFilePath = view.SourceFilePath,
+                UploadCorrelationId = view.UploadCorrelationId,
                 IsReadOnly = view.IsReadOnly,
                 Items = view.Items?.Select(i => new ErrorProcessingItemFormModel
                 {
                     ErrorProcessingItemId = i.ErrorProcessingItemId,
                     FieldCode = i.FieldCode,
+                    RowNumber = i.RowNumber,
                     RawValue = i.RawValue,
                     ParserMessage = i.ParserMessage,
                     UserValue = i.UserValue,

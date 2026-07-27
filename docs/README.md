@@ -24,3 +24,4 @@
 | [04-access.md](db/04-access.md) | Роли и права |
 | [05-ddl.sql](db/05-ddl.sql) | Базовый DDL + seed ListType |
 | [06-rc-list-entry.sql](db/06-rc-list-entry.sql) | Зеркало полей Excel листа `RC` → `[restrict].[RcListEntry]` |
+| [migrations/](db/migrations/) | Идемпотентные schema-patch (в т.ч. `IX_ErrorProcessingCase_Status_CreatedAt`) |

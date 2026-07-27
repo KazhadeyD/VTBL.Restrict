@@ -48,7 +48,17 @@ dotnet test VTBL.Restrict.sln
 
 ## История изменений
 
+### 27.07.2026
+- UC-05: добавлен активный тип списка `NFA` («Нелегальная финансовая деятельность») в seed справочника `ListType` (SQL: `docs/db/05-ddl.sql`, docker init: `docker/mssql/init/02-schema.sql`) и in-memory store (`InMemoryListTypeReadStore`) для dev/test.
+- Обновлены тест и каталог типов: `InMemoryListTypeReadStoreTests` проверяет `NFA`; `docs/list-types.md` синхронизирован с новым кодом/маршрутизацией `nfa`.
+
 ### 15.07.2026
+- **EP-4.1:** docs supersession (`ExpiresAt` не gate UI до security-эпика) — `01-domain.md`, `architecture.md`, `screens-flow.md`, `runbook-local.md`; smoke TC-LIVE-EP-01…03 в `smoke-checklist.md`
+- **EP-3.1…2.5:** usable Error Processing UI — список `/error-processing` + кейс с resolve; Application/E2E регрессия (Db-fail, deep-link, empty items)
+- EP-2.1: идемпотентный index-patch `IX_ErrorProcessingCase_Status_CreatedAt` (`Status`, `CreatedAt DESC`) — `docs/db/migrations/` + docker `04-ep-index-status-createdat.sql`; канон `05-ddl.sql` / `02-schema.sql` / `03-physical.md`
+- EP-1.3: E2E/unit скелет списка Error Processing — stub-ожидания empty (`ErrorProcessingListE2ETests`, `ListPendingErrorProcessingCasesQueryTests` + InMemory `ListPendingSummariesAsync`); регресс Upload/Get form
+- EP-1.2: Razor List `/error-processing` (stub empty-state) + navbar «Обработка ошибок»; FormModel `RowNumber` / `UploadCorrelationId`; Index каркас (метка ExpiresAt, «К списку», ReasonDb UX)
+- EP-1.1: контракты списка Error Processing — `ListPendingErrorProcessingCasesQuery` (stub: пустой Items), `ErrorProcessingCaseSummaryRecord` / DTO, enrich Get (`CreatedAtUtc` / `UploadCorrelationId`, `ReasonDb`/`DbError`); EF List — stub empty, InMemory — Pending filter
 - Доступ к БД: Dapper заменён на **EF Core 5**; проект `VTBL.Restrict.Context` (`RestrictDbContext` + Ef*Store); схема по-прежнему из SQL init
 - Таблица `[restrict].[RcListEntry]` — колонки «как есть» из Excel листа `RC` (файл не загружался); DDL `docs/db/06-rc-list-entry.sql`
 - Docker Compose: отдельный MSSQL (`vtbl-restrict-mssql`, порт **1434**), init DDL `VTBL_Restrict`; Development подключён к контейнеру
@@ -62,7 +72,7 @@ dotnet test VTBL.Restrict.sln
 - Задача 2.4: `RetryUploadNotificationCommand` — повтор RMQ без FileShare; ветки Failed/Pending/Published/not found
 - Задача 2.3: полный upload flow EC-08 (WriteAsIs → UploadBatch Pending → RMQ → Published/Failed), `SqlUploadBatchStore`, `RabbitMqUploadNotifier`
 - Задача 2.2: `UncFileShareStore` (as-is, temp+rename), `PathBuilder`, реальная запись после валидации; RMQ — в 2.3
-- Задача 2.1: оболочка EC-02 (`UploadShellValidator` / `FileNameSanitizer`), `IListTypeReadStore` (SQL Dapper + InMemory seed MVK/TERRORISTS), Upload GET из store; без парсинга Excel/CSV
+- Задача 2.1: оболочка EC-02 (`UploadShellValidator` / `FileNameSanitizer`), `IListTypeReadStore` (SQL Dapper + InMemory seed MVK/TERRORISTS/NFA), Upload GET из store; без парсинга Excel/CSV
 - Задача 1.3: канонический E2E-проект `tests/VTBL.Restrict.Tests` (WebApplicationFactory) + расширенные stub unit-тесты; E2E вынесены из UI.Tests
 - Задача 1.2: Razor Pages `/Upload`, `/Upload/Retry`, `/error-processing/{caseId}` + DI stubs (`AddRestrictInfrastructure` в Startup)
 - Задача 1.1: добавлены проекты `Domain` / `Application` / `Infrastructure` (net5.0) с портами и stub-командами; UI ссылается на Application+Infrastructure
