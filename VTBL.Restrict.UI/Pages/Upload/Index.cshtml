@@ -43,6 +43,13 @@
                accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" />
         <span asp-validation-for="Input.File" class="text-danger"></span>
         <div id="upload-file-meta" class="text-muted small mt-1" data-upload-file-meta="true"></div>
+        <button type="button"
+                class="btn btn-sm btn-outline-danger mt-1"
+                id="upload-file-clear"
+                data-upload-file-clear="true"
+                hidden>
+            Удалить файл
+        </button>
     </div>
 
     <button type="submit" class="btn btn-primary" data-upload-submit="true">Отправить</button>

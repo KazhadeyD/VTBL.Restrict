@@ -37,8 +37,10 @@ namespace VTBL.Restrict.Tests.E2E
             Assert.Contains("data-upload-submit", decoded);
             Assert.Contains("data-upload-dropzone", decoded);
             Assert.Contains("data-upload-browse", decoded);
+            Assert.Contains("data-upload-file-clear", decoded);
             Assert.Contains("Отправить", decoded);
             Assert.Contains("Выбрать файл", decoded);
+            Assert.Contains("Удалить файл", decoded);
             Assert.Contains("upload-dnd.js", decoded);
             Assert.Contains("value=\"MVK\"", decoded);
             Assert.Contains("value=\"TERRORISTS\"", decoded);

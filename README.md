@@ -49,6 +49,7 @@ dotnet test VTBL.Restrict.sln
 ## История изменений
 
 ### 27.07.2026
+- Upload UI: кнопка «Удалить файл» — сброс выбранного файла (DnD / picker) до отправки формы; `upload-dnd.js` + `data-upload-file-clear`
 - UC-05: добавлен активный тип списка `NFA` («Нелегальная финансовая деятельность») в seed справочника `ListType` (SQL: `docs/db/05-ddl.sql`, docker init: `docker/mssql/init/02-schema.sql`) и in-memory store (`InMemoryListTypeReadStore`) для dev/test.
 - Обновлены тест и каталог типов: `InMemoryListTypeReadStoreTests` проверяет `NFA`; `docs/list-types.md` синхронизирован с новым кодом/маршрутизацией `nfa`.
 

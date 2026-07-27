@@ -8,18 +8,32 @@
         var meta = document.getElementById(options.metaId || 'upload-file-meta');
         var zone = document.getElementById(options.zoneId || 'upload-dropzone');
         var browse = document.getElementById(options.browseId || 'upload-browse');
+        var clearBtn = document.getElementById(options.clearId || 'upload-file-clear');
 
         if (!input || !meta || !zone) {
             return;
         }
 
+        function hasFile() {
+            return !!(input.files && input.files[0]);
+        }
+
         function showMeta() {
-            if (!input.files || !input.files[0]) {
+            if (!hasFile()) {
                 meta.textContent = '';
+                updateClearButton();
                 return;
             }
             var f = input.files[0];
             meta.textContent = f.name + ' (' + f.size + ' bytes)';
+            updateClearButton();
+        }
+
+        function updateClearButton() {
+            if (!clearBtn) {
+                return;
+            }
+            clearBtn.hidden = !hasFile();
         }
 
         function assignFile(file) {
@@ -36,7 +50,25 @@
             showMeta();
         }
 
+        function clearFile() {
+            input.value = '';
+            try {
+                var dt = new DataTransfer();
+                input.files = dt.files;
+            } catch (e) {
+                // Fallback: value reset above is enough for submit validation.
+            }
+            showMeta();
+        }
+
         input.addEventListener('change', showMeta);
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                clearFile();
+            });
+        }
 
         if (browse) {
             browse.addEventListener('click', function (e) {
