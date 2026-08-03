@@ -1,10 +1,19 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using VTBL.Restrict.Loader.Infrastructure;
+using VTBL.Restrict.Loader.Application.Abstractions;
+using VTBL.Restrict.Loader.Application.Options;
+using VTBL.Restrict.Loader.Application.Uploads;
+using VTBL.Restrict.Loader.Context;
+using VTBL.Restrict.Loader.Context.Stores;
+using VTBL.Restrict.Loader.Infrastructure.Files;
+using VTBL.Restrict.Loader.Infrastructure.Messaging;
+using VTBL.Restrict.Loader.Infrastructure.Options;
+using VTBL.Restrict.Loader.Infrastructure.Stub;
 
 namespace VTBL.Restrict.Loader.UI
 {
@@ -26,12 +35,37 @@ namespace VTBL.Restrict.Loader.UI
                 options.MultipartBodyLengthLimit = maxFileSizeBytes;
             });
 
-            services.AddRazorPages(options =>
-            {
-                // Канонический маршрут загрузки: /Upload
-            });
+            services.AddRazorPages();
 
-            services.AddRestrictInfrastructure(Configuration);
+            services.Configure<RestrictStorageOptions>(Configuration.GetSection(RestrictStorageOptions.SectionName));
+            services.Configure<RabbitMqOptions>(Configuration.GetSection(RabbitMqOptions.SectionName));
+
+            var connectionString = Configuration.GetConnectionString("RestrictDb");
+            if (!string.IsNullOrWhiteSpace(connectionString))
+            {
+                services.AddDbContext<RestrictDbContext>(options =>
+                    options.UseSqlServer(connectionString));
+                services.AddScoped<IListTypeReadStore, EfListTypeReadStore>();
+            }
+            else
+            {
+                services.AddSingleton<IListTypeReadStore>(_ => new InMemoryListTypeReadStore());
+            }
+
+            services.AddSingleton<IUploadPathBuilder, UploadPathBuilder>();
+            services.AddSingleton<IFileShareStore, UncFileShareStore>();
+
+            var rabbitHost = Configuration.GetSection(RabbitMqOptions.SectionName).Get<RabbitMqOptions>()?.Host;
+            if (!string.IsNullOrWhiteSpace(rabbitHost))
+            {
+                services.AddSingleton<IUploadNotifier, RabbitMqUploadNotifier>();
+            }
+            else
+            {
+                services.AddSingleton<IUploadNotifier, InMemoryUploadNotifier>();
+            }
+
+            services.AddTransient<UploadRestrictFileCommand>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
