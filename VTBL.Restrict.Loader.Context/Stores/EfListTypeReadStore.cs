@@ -42,15 +42,6 @@ namespace VTBL.Restrict.Loader.Context.Stores
             return entity == null ? null : Map(entity);
         }
 
-        public async Task<ListTypeInfo> GetByIdAsync(int listTypeId, CancellationToken cancellationToken)
-        {
-            var entity = await _db.ListTypes
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.ListTypeId == listTypeId, cancellationToken);
-
-            return entity == null ? null : Map(entity);
-        }
-
         private static ListTypeInfo Map(Entities.ListTypeEntity x)
         {
             return new ListTypeInfo

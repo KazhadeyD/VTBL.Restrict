@@ -50,12 +50,6 @@ namespace VTBL.Restrict.Loader.Infrastructure.Stub
             return Task.FromResult(found == null ? null : Clone(found));
         }
 
-        public Task<ListTypeInfo> GetByIdAsync(int listTypeId, CancellationToken cancellationToken)
-        {
-            var found = _items.FirstOrDefault(x => x.ListTypeId == listTypeId);
-            return Task.FromResult(found == null ? null : Clone(found));
-        }
-
         private static IEnumerable<ListTypeInfo> CreateDefaultSeed()
         {
             yield return new ListTypeInfo

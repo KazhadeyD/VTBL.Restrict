@@ -14,24 +14,6 @@ namespace VTBL.Restrict.Loader.Infrastructure.Files
     {
         private const int BufferSize = 81920;
 
-        /// <summary>
-        /// Строит целевой путь по правилам ListType.
-        /// </summary>
-        public static string BuildTargetPath(
-            string remoteRoot,
-            string folderSegment,
-            DateTime utcNow,
-            Guid correlationId,
-            string originalFileName)
-        {
-            return PathBuilder.BuildTargetPath(
-                remoteRoot,
-                folderSegment,
-                utcNow,
-                correlationId,
-                originalFileName);
-        }
-
         /// <inheritdoc />
         public async Task<string> WriteAsIsAsync(
             Stream content,

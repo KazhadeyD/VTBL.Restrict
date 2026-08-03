@@ -12,10 +12,5 @@ namespace VTBL.Restrict.Loader.Application.Abstractions
     {
         Task<IReadOnlyList<ListTypeInfo>> GetActiveAsync(CancellationToken cancellationToken);
         Task<ListTypeInfo> GetByCodeAsync(string code, CancellationToken cancellationToken);
-
-        /// <summary>
-        /// Загрузка типа по Id (без фильтра IsActive).
-        /// </summary>
-        Task<ListTypeInfo> GetByIdAsync(int listTypeId, CancellationToken cancellationToken);
     }
 }
