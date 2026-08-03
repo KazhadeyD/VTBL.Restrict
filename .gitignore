@@ -1,5 +1,11 @@
-# Pipeline artifacts
-docs/implementation/
+# Cursor
+.cursor/
+
+# Pipeline artifacts / project docs (local only)
+docs/
+
+# Docker local stack
+docker/
 
 # Visual Studio / VS Code
 .vs/
