@@ -1,4 +1,4 @@
-# VTBL.Restrict
+# VTBL.Restrict.Loader
 
 UI для работы с **рестриктивными списками** (МВК, Террористы и др.): загрузка Excel/CSV на удалённую папку **as is** (без разбора содержимого), уведомление сервиса парсинга через RabbitMQ, **обработка ошибок** по ссылке из письма с данными из БД.
 
@@ -8,15 +8,15 @@ UI для работы с **рестриктивными списками** (М�
 
 | Элемент | Описание |
 | --- | --- |
-| `VTBL.Restrict.sln` | Solution Visual Studio (целевой TFM: **net5.0**) |
-| `VTBL.Restrict.UI` | Веб-приложение (Razor Pages, `.NET 5.0`) |
-| `VTBL.Restrict.Domain` | Доменные enums/value helpers |
-| `VTBL.Restrict.Application` | Сценарии upload/error-processing, порты (interfaces) |
-| `VTBL.Restrict.Context` | EF Core: `RestrictDbContext`, сущности, EF-stores |
-| `VTBL.Restrict.Infrastructure` | Файловая шара, RabbitMQ, InMemory-заглушки; подключает Context при RestrictDb |
-| `tests/VTBL.Restrict.Tests` | Канонический E2E-скелет (WebApplicationFactory, stub expectations) |
-| `tests/VTBL.Restrict.Application.Tests` | Модульные тесты Application stubs |
-| `tests/VTBL.Restrict.UI.Tests` | Unit-тесты PageModels |
+| `VTBL.Restrict.Loader.sln` | Solution Visual Studio (целевой TFM: **net5.0**) |
+| `VTBL.Restrict.Loader.UI` | Веб-приложение (Razor Pages, `.NET 5.0`) |
+| `VTBL.Restrict.Loader.Domain` | Доменные enums/value helpers |
+| `VTBL.Restrict.Loader.Application` | Сценарии upload/error-processing, порты (interfaces) |
+| `VTBL.Restrict.Loader.Context` | EF Core: `RestrictDbContext`, сущности, EF-stores |
+| `VTBL.Restrict.Loader.Infrastructure` | Файловая шара, RabbitMQ, InMemory-заглушки; подключает Context при RestrictDb |
+| `tests/VTBL.Restrict.Loader.Tests` | Канонический E2E-скелет (WebApplicationFactory, stub expectations) |
+| `tests/VTBL.Restrict.Loader.Application.Tests` | Модульные тесты Application stubs |
+| `tests/VTBL.Restrict.Loader.UI.Tests` | Unit-тесты PageModels |
 | `docker-compose.yml` | MSSQL Server 2022 (отдельный стек, порт **1434**) |
 | `docs/` | Проектная документация (ТЗ, БД, интеграции, экраны, архитектура) |
 
@@ -34,7 +34,7 @@ UI для работы с **рестриктивными списками** (М�
 copy .env.example .env
 docker compose up -d
 
-dotnet run --project VTBL.Restrict.UI --urls http://localhost:5000
+dotnet run --project VTBL.Restrict.Loader.UI --urls http://localhost:5000
 ```
 
 Development connection string: `localhost,1434` / БД `VTBL_Restrict` / sa (пароль из `.env` / `.env.example`). Пустой `RabbitMq:Host` → InMemory notifier (**не** live RMQ).
@@ -42,11 +42,14 @@ Development connection string: `localhost,1434` / БД `VTBL_Restrict` / sa (п�
 ## Сборка
 
 ```bash
-dotnet build VTBL.Restrict.sln
-dotnet test VTBL.Restrict.sln
+dotnet build VTBL.Restrict.Loader.sln
+dotnet test VTBL.Restrict.Loader.sln
 ```
 
 ## История изменений
+
+### 03.08.2026
+- Полный rename: папка / solution / проекты / namespaces `VTBL.Restrict` → `VTBL.Restrict.Loader` (типы вроде `RestrictDbContext`, БД `VTBL_Restrict`, Docker-сервисы без изменений имени)
 
 ### 27.07.2026
 - Upload UI: кнопка «Удалить файл» — сброс выбранного файла (DnD / picker) до отправки формы; `upload-dnd.js` + `data-upload-file-clear`
@@ -60,7 +63,7 @@ dotnet test VTBL.Restrict.sln
 - EP-1.3: E2E/unit скелет списка Error Processing — stub-ожидания empty (`ErrorProcessingListE2ETests`, `ListPendingErrorProcessingCasesQueryTests` + InMemory `ListPendingSummariesAsync`); регресс Upload/Get form
 - EP-1.2: Razor List `/error-processing` (stub empty-state) + navbar «Обработка ошибок»; FormModel `RowNumber` / `UploadCorrelationId`; Index каркас (метка ExpiresAt, «К списку», ReasonDb UX)
 - EP-1.1: контракты списка Error Processing — `ListPendingErrorProcessingCasesQuery` (stub: пустой Items), `ErrorProcessingCaseSummaryRecord` / DTO, enrich Get (`CreatedAtUtc` / `UploadCorrelationId`, `ReasonDb`/`DbError`); EF List — stub empty, InMemory — Pending filter
-- Доступ к БД: Dapper заменён на **EF Core 5**; проект `VTBL.Restrict.Context` (`RestrictDbContext` + Ef*Store); схема по-прежнему из SQL init
+- Доступ к БД: Dapper заменён на **EF Core 5**; проект `VTBL.Restrict.Loader.Context` (`RestrictDbContext` + Ef*Store); схема по-прежнему из SQL init
 - Таблица `[restrict].[RcListEntry]` — колонки «как есть» из Excel листа `RC` (файл не загружался); DDL `docs/db/06-rc-list-entry.sql`
 - Docker Compose: отдельный MSSQL (`vtbl-restrict-mssql`, порт **1434**), init DDL `VTBL_Restrict`; Development подключён к контейнеру
 - Задача 4.2: DDL `[restrict]` (reserved), runbook/smoke checklist, Development LocalDB + RemoteRoot; live smoke + blockers (RMQ broker)
@@ -74,7 +77,7 @@ dotnet test VTBL.Restrict.sln
 - Задача 2.3: полный upload flow EC-08 (WriteAsIs → UploadBatch Pending → RMQ → Published/Failed), `SqlUploadBatchStore`, `RabbitMqUploadNotifier`
 - Задача 2.2: `UncFileShareStore` (as-is, temp+rename), `PathBuilder`, реальная запись после валидации; RMQ — в 2.3
 - Задача 2.1: оболочка EC-02 (`UploadShellValidator` / `FileNameSanitizer`), `IListTypeReadStore` (SQL Dapper + InMemory seed MVK/TERRORISTS/NFA), Upload GET из store; без парсинга Excel/CSV
-- Задача 1.3: канонический E2E-проект `tests/VTBL.Restrict.Tests` (WebApplicationFactory) + расширенные stub unit-тесты; E2E вынесены из UI.Tests
+- Задача 1.3: канонический E2E-проект `tests/VTBL.Restrict.Loader.Tests` (WebApplicationFactory) + расширенные stub unit-тесты; E2E вынесены из UI.Tests
 - Задача 1.2: Razor Pages `/Upload`, `/Upload/Retry`, `/error-processing/{caseId}` + DI stubs (`AddRestrictInfrastructure` в Startup)
 - Задача 1.1: добавлены проекты `Domain` / `Application` / `Infrastructure` (net5.0) с портами и stub-командами; UI ссылается на Application+Infrastructure
 - Целевой TFM solution зафиксирован: **net5.0** (миграция net8 отложена / запрещена product owner)
@@ -85,6 +88,6 @@ dotnet test VTBL.Restrict.sln
 
 ### 14.07.2026
 - Добавлен пакет проектирования в `docs/`: ТЗ, типы списков, БД (domain/ER/physical/access/DDL), интеграция папка+RabbitMQ, экраны, архитектура
-- Solution переведён с формата `VTBL.Restrict.slnx` на классический `VTBL.Restrict.sln`
-- Файл `VTBL.Restrict.slnx` удалён
+- Solution переведён с формата `VTBL.Restrict.Loader.slnx` на классический `VTBL.Restrict.Loader.sln`
+- Файл `VTBL.Restrict.Loader.slnx` удалён
 - Добавлен `README.md`
