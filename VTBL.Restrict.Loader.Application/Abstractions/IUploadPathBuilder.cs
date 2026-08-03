@@ -3,7 +3,7 @@ using System;
 namespace VTBL.Restrict.Loader.Application.Abstractions
 {
     /// <summary>
-    /// Построение целевого пути файла на шаре (EC-01, docs/list-types.md).
+    /// Построение целевого пути файла на шаре.
     /// </summary>
     public interface IUploadPathBuilder
     {

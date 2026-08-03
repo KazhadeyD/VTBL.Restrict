@@ -6,7 +6,7 @@ using System.Linq;
 namespace VTBL.Restrict.Loader.Domain.Uploads
 {
     /// <summary>
-    /// Проверка оболочки файла (EC-02). Содержимое потока не читается.
+    /// Проверка метаданных файла (тип, расширение, размер). Содержимое потока не читается.
     /// </summary>
     public static class UploadShellValidator
     {

@@ -18,7 +18,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Tests.E2E
 {
     /// <summary>
-    /// TC-E2E (task 4.1): Upload fail пишет лог с correlationId.
+    /// При ошибке загрузки в лог пишется correlationId.
     /// </summary>
     public sealed class ObservabilityLoggingE2ETests : IClassFixture<RestrictWebAppFactory>
     {

@@ -10,7 +10,7 @@ using AppUploadedMessage = VTBL.Restrict.Loader.Application.Abstractions.Restric
 namespace VTBL.Restrict.Loader.Infrastructure.Messaging
 {
     /// <summary>
-    /// Публикация RestrictFileUploaded в topic exchange (EC-04).
+    /// Публикация сообщения о загрузке файла в RabbitMQ (topic exchange).
     /// </summary>
     public sealed class RabbitMqUploadNotifier : IUploadNotifier
     {

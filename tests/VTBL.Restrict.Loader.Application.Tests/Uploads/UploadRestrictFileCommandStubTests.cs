@@ -8,7 +8,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Application.Tests.Uploads
 {
     /// <summary>
-    /// Upload command: реальная запись as-is после 2.2.
+    /// Команда загрузки: реальная запись файла.
     /// </summary>
     public sealed class UploadRestrictFileCommandStubTests
     {

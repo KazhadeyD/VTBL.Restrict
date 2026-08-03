@@ -5,7 +5,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.UI.Tests.Unit
 {
     /// <summary>
-    /// TC-UNIT-01: различимые тексты/коды UC-02.
+    /// Различимые тексты и коды ошибок загрузки.
     /// </summary>
     public sealed class UploadErrorMessageMapperTests
     {

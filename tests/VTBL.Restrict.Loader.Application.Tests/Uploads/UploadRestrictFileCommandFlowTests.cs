@@ -16,7 +16,7 @@ using MsOptions = Microsoft.Extensions.Options.Options;
 namespace VTBL.Restrict.Loader.Application.Tests.Uploads
 {
     /// <summary>
-    /// TC-UNIT (task 2.3): порядок EC-08 и ветки ошибок upload flow.
+    /// Порядок шагов загрузки и ветки ошибок.
     /// </summary>
     public sealed class UploadRestrictFileCommandFlowTests
     {

@@ -5,7 +5,7 @@ using VTBL.Restrict.Loader.Domain.Uploads;
 namespace VTBL.Restrict.Loader.Infrastructure.Files
 {
     /// <summary>
-    /// Правила пути выкладки файла (docs/list-types.md, integration-file-rmq.md).
+    /// Правила построения пути выкладки файла.
     /// </summary>
     public static class PathBuilder
     {

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace VTBL.Restrict.Loader.Application.Abstractions
 {
     /// <summary>
-    /// Публикация RestrictFileUploaded в RabbitMQ (после успешной записи файла — EC-08).
+    /// Публикация уведомления о загрузке в RabbitMQ (после успешной записи файла).
     /// </summary>
     public interface IUploadNotifier
     {

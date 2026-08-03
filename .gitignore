@@ -1,5 +1,9 @@
 # Cursor
 .cursor/
+AGENTS.md
+.AGENTS.md
+**/AGENTS.md
+**/.AGENTS.md
 
 # Pipeline artifacts / project docs (local only)
 docs/

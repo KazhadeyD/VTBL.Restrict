@@ -19,7 +19,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Tests.E2E
 {
     /// <summary>
-    /// TC-E2E (task 2.2): реальная запись as-is в temp RemoteRoot.
+    /// Реальная запись файла в временный RemoteRoot.
     /// </summary>
     public sealed class UploadFileShareE2ETests : IClassFixture<RestrictWebAppFactory>, IDisposable
     {

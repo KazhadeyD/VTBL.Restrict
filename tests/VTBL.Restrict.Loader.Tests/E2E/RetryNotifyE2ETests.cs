@@ -17,7 +17,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Tests.E2E
 {
     /// <summary>
-    /// TC-E2E (task 2.4): Retry notify без повторной выкладки файла.
+    /// Повтор уведомления без повторной выкладки файла.
     /// </summary>
     public sealed class RetryNotifyE2ETests : IClassFixture<RestrictWebAppFactory>, IDisposable
     {

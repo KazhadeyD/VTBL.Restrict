@@ -1,7 +1,7 @@
 namespace VTBL.Restrict.Loader.Application.Uploads
 {
     /// <summary>
-    /// Коды ошибок сценария загрузки (UC-02).
+    /// Коды ошибок сценария загрузки.
     /// </summary>
     public static class UploadErrorCodes
     {

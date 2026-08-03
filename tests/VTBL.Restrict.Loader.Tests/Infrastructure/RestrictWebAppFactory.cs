@@ -81,7 +81,7 @@ namespace VTBL.Restrict.Loader.Tests.Infrastructure
     }
 
     /// <summary>
-    /// Notifier с фиксацией порядка относительно file write (E2E EC-08).
+    /// Notifier с фиксацией порядка относительно записи файла.
     /// </summary>
     public sealed class TrackingUploadNotifier : IUploadNotifier
     {

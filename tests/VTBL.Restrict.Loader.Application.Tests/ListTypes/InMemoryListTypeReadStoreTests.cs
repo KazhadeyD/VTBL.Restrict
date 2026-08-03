@@ -7,7 +7,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Application.Tests.ListTypes
 {
     /// <summary>
-    /// TC-UNIT-03: ListType store returns only IsActive=1 (lightweight in-memory).
+    /// Справочник типов возвращает только активные записи.
     /// SQL реализация покрыта кодом SqlListTypeReadStore; live SQL — external blocker без RestrictDb.
     /// </summary>
     public sealed class InMemoryListTypeReadStoreTests

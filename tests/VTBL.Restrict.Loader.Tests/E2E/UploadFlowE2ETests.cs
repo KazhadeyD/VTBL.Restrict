@@ -20,7 +20,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Tests.E2E
 {
     /// <summary>
-    /// TC-E2E (task 2.3): полный upload flow validate → write → batch → notify.
+    /// Полный сценарий загрузки: проверка, запись, учёт, уведомление.
     /// </summary>
     public sealed class UploadFlowE2ETests : IClassFixture<RestrictWebAppFactory>, IDisposable
     {

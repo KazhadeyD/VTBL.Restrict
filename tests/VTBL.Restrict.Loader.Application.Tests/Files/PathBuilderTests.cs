@@ -8,7 +8,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Application.Tests.Files
 {
     /// <summary>
-    /// TC-UNIT-01: PathBuilder.
+    /// Построение пути выкладки.
     /// </summary>
     public sealed class PathBuilderTests
     {

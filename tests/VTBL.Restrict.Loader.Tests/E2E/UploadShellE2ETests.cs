@@ -14,7 +14,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Tests.E2E
 {
     /// <summary>
-    /// TC-E2E-01/02 (task 2.1): Upload page + validation без вызова file share.
+    /// Страница загрузки и валидация без вызова файловой шары.
     /// ListType через InMemory seed (MVK/TERRORISTS/NFA) при пустом RestrictDb.
     /// </summary>
     public sealed class UploadShellE2ETests : IClassFixture<RestrictWebAppFactory>

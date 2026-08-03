@@ -3,7 +3,7 @@ using VTBL.Restrict.Loader.Application.Uploads;
 namespace VTBL.Restrict.Loader.UI.Uploads
 {
     /// <summary>
-    /// Маппинг кодов UploadErrorCodes в тексты UC-02 (без stack trace).
+    /// Маппинг кодов ошибок загрузки в понятные пользователю тексты.
     /// </summary>
     public static class UploadErrorMessageMapper
     {
@@ -44,7 +44,7 @@ namespace VTBL.Restrict.Loader.UI.Uploads
         }
 
         /// <summary>
-        /// Retry доступен при сбое publish после записи файла (UC-01 А3).
+        /// Повтор уведомления доступен при сбое публикации после записи файла.
         /// </summary>
         public static bool ShouldShowRetry(bool success, string errorCode, string correlationId)
         {

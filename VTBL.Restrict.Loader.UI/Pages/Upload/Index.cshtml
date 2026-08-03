@@ -5,7 +5,7 @@
 }
 
 <h1>Загрузка рестриктивного списка</h1>
-<p class="text-muted">Файл передаётся as is. Содержимое не просматривается и не разбирается.</p>
+<p class="text-muted">Файл передаётся без изменений. Содержимое не просматривается и не разбирается.</p>
 
 <partial name="_UploadResult" model="Model" />
 
@@ -28,7 +28,7 @@
     <div class="form-group">
         <label asp-for="Input.File"></label>
         <div id="upload-dropzone"
-             class="border p-4 mb-2 bg-light text-center"
+             class="corp-dropzone p-4 mb-2 text-center"
              data-upload-dropzone="true">
             <p class="mb-2">Перетащите файл сюда</p>
             <button type="button" class="btn btn-sm btn-outline-primary" id="upload-browse" data-upload-browse="true">
@@ -42,14 +42,16 @@
                data-upload-file="true"
                accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" />
         <span asp-validation-for="Input.File" class="text-danger"></span>
-        <div id="upload-file-meta" class="text-muted small mt-1" data-upload-file-meta="true"></div>
-        <button type="button"
-                class="btn btn-sm btn-outline-danger mt-1"
-                id="upload-file-clear"
-                data-upload-file-clear="true"
-                hidden>
-            Удалить файл
-        </button>
+        <div class="upload-file-selected mt-1">
+            <div id="upload-file-meta" class="text-muted small" data-upload-file-meta="true"></div>
+            <button type="button"
+                    class="btn btn-link upload-file-clear"
+                    id="upload-file-clear"
+                    data-upload-file-clear="true"
+                    title="Удалить файл"
+                    aria-label="Удалить файл"
+                    hidden>❌</button>
+        </div>
     </div>
 
     <button type="submit" class="btn btn-primary" data-upload-submit="true">Отправить</button>

@@ -15,7 +15,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Tests.E2E
 {
     /// <summary>
-    /// Upload UI E2E: controls, validation UX, retry; UC-RM-01 — нет EP navbar/маршрутов.
+    /// UI загрузки: элементы управления, валидация, повтор уведомления.
     /// </summary>
     public sealed class UploadUiE2ETests : IClassFixture<RestrictWebAppFactory>
     {
@@ -43,7 +43,7 @@ namespace VTBL.Restrict.Loader.Tests.E2E
             Assert.Contains("data-upload-file-clear", decoded);
             Assert.Contains("Отправить", decoded);
             Assert.Contains("Выбрать файл", decoded);
-            Assert.Contains("Удалить файл", decoded);
+            Assert.Contains("aria-label=\"Удалить файл\"", decoded);
             Assert.Contains("upload-dnd.js", decoded);
             Assert.Contains("value=\"MVK\"", decoded);
             Assert.Contains("value=\"TERRORISTS\"", decoded);

@@ -13,7 +13,7 @@ using VTBL.Restrict.Loader.UI.Uploads;
 namespace VTBL.Restrict.Loader.UI.Pages.Upload
 {
     /// <summary>
-    /// Страница загрузки файла. Типы списков — из IListTypeReadStore (UC-05).
+    /// Страница загрузки файла. Типы списков — из справочника активных ListType.
     /// </summary>
     [RequestSizeLimit(52_428_800)]
     public class IndexModel : PageModel

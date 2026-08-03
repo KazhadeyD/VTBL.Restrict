@@ -11,7 +11,7 @@ namespace VTBL.Restrict.Loader.Context
     {
         /// <summary>
         /// Регистрирует <see cref="RestrictDbContext"/> и EF-реализации портов Application
-        /// (ListType, UploadBatch). Без Error Processing.
+        /// (ListType, UploadBatch).
         /// </summary>
         public static IServiceCollection AddRestrictContext(
             this IServiceCollection services,

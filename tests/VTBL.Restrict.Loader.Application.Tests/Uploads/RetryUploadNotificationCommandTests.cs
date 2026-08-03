@@ -11,7 +11,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Application.Tests.Uploads
 {
     /// <summary>
-    /// TC-UNIT (task 2.4): Retry без FileShare; ветки Status.
+    /// Повтор уведомления без FileShare; ветки статусов.
     /// </summary>
     public sealed class RetryUploadNotificationCommandTests
     {

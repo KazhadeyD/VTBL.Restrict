@@ -6,7 +6,7 @@ using VTBL.Restrict.Loader.Application.Abstractions;
 namespace VTBL.Restrict.Loader.Infrastructure.Stub
 {
     /// <summary>
-    /// Заглушка файловой шары. Не читает и не интерпретирует содержимое потока (EC-01).
+    /// Заглушка файловой шары. Не читает и не интерпретирует содержимое потока.
     /// </summary>
     public sealed class StubFileShareStore : IFileShareStore
     {

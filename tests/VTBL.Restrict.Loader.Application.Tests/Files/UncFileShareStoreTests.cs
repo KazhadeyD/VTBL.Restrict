@@ -8,7 +8,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Application.Tests.Files
 {
     /// <summary>
-    /// TC-UNIT-02/03: UncFileShareStore byte copy + temp cleanup on failure.
+    /// Копирование байт и очистка temp при ошибке.
     /// </summary>
     public sealed class UncFileShareStoreTests
     {

@@ -6,7 +6,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Application.Tests.Domain
 {
     /// <summary>
-    /// TC-UNIT-01: UploadShellValidator.
+    /// Проверка метаданных загрузки.
     /// </summary>
     public sealed class UploadShellValidatorTests
     {
@@ -50,7 +50,7 @@ namespace VTBL.Restrict.Loader.Application.Tests.Domain
     }
 
     /// <summary>
-    /// TC-UNIT-02: FileNameSanitizer.
+    /// Санитизация имени файла.
     /// </summary>
     public sealed class FileNameSanitizerTests
     {

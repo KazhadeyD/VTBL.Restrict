@@ -13,7 +13,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.UI.Tests.Unit
 {
     /// <summary>
-    /// TC-UNIT (UI): OnPost вызывает UploadRestrictFileCommand ровно один раз.
+    /// OnPost вызывает команду загрузки ровно один раз.
     /// </summary>
     public sealed class UploadPageModelTests
     {

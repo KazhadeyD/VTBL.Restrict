@@ -10,7 +10,7 @@ using VTBL.Restrict.Loader.Domain.Enums;
 namespace VTBL.Restrict.Loader.Application.Uploads
 {
     /// <summary>
-    /// Повтор уведомления RMQ без повторной выкладки файла (контракт Retry, EC-01).
+    /// Повтор уведомления без повторной выкладки файла.
     /// </summary>
     public sealed class RetryUploadNotificationCommand
     {

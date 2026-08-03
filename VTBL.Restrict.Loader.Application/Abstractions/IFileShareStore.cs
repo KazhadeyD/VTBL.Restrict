@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace VTBL.Restrict.Loader.Application.Abstractions
 {
     /// <summary>
-    /// Выкладка файла as is на удалённую папку. Содержимое не интерпретировать (EC-01).
+    /// Выкладка файла без изменений на удалённую папку. Содержимое не интерпретировать.
     /// </summary>
     public interface IFileShareStore
     {

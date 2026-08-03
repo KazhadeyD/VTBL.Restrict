@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace VTBL.Restrict.Loader.UI
 {
     /// <summary>
-    /// Точка входа host. Паттерн Startup сохранён (net5).
+    /// Точка входа приложения.
     /// </summary>
     public class Program
     {

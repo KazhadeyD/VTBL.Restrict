@@ -14,7 +14,7 @@ using AppNotifyMessage = VTBL.Restrict.Loader.Application.Abstractions.RestrictF
 namespace VTBL.Restrict.Loader.Application.Uploads
 {
     /// <summary>
-    /// Сценарий первичной загрузки: validate → write as-is → batch → RMQ (EC-08).
+    /// Сценарий первичной загрузки: проверка, запись файла, учёт партии, уведомление.
     /// </summary>
     public class UploadRestrictFileCommand
     {

@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace VTBL.Restrict.Loader.Infrastructure.Messaging
 {
     /// <summary>
-    /// JSON payload RestrictFileUploaded для RabbitMQ (docs/integration-file-rmq.md).
+    /// JSON-сообщение о загрузке файла для RabbitMQ.
     /// </summary>
     public sealed class RestrictFileUploadedMessage
     {

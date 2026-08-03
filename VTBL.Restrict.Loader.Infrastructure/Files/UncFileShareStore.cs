@@ -7,7 +7,7 @@ using VTBL.Restrict.Loader.Application.Abstractions;
 namespace VTBL.Restrict.Loader.Infrastructure.Files
 {
     /// <summary>
-    /// Выкладка файла as is на UNC/локальный RemoteRoot: temp + rename (EC-01).
+    /// Выкладка файла без изменений на UNC/локальный RemoteRoot: temp + rename.
     /// Содержимое потока не интерпретируется.
     /// </summary>
     public sealed class UncFileShareStore : IFileShareStore

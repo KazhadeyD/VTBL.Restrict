@@ -12,7 +12,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Application.Tests.Stubs
 {
     /// <summary>
-    /// Stub Result codes для команд/queries. Upload после 2.2 — реальная запись в temp RemoteRoot.
+    /// Коды результатов команд и запросов. Загрузка пишет в временный RemoteRoot.
     /// </summary>
     public sealed class ApplicationStubCommandsTests
     {
