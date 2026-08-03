@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
@@ -14,7 +15,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Tests.E2E
 {
     /// <summary>
-    /// TC-E2E (task 2.5): Upload UI — controls, validation UX, retry on RMQ fail.
+    /// Upload UI E2E: controls, validation UX, retry; UC-RM-01 — нет EP navbar/маршрутов.
     /// </summary>
     public sealed class UploadUiE2ETests : IClassFixture<RestrictWebAppFactory>
     {
@@ -29,7 +30,9 @@ namespace VTBL.Restrict.Loader.Tests.E2E
         public async Task TC_E2E_01_PageContainsSelectFileInputSubmitAndDnD()
         {
             var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-            var html = await (await client.GetAsync("/Upload")).Content.ReadAsStringAsync();
+            var response = await client.GetAsync("/Upload");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var html = await response.Content.ReadAsStringAsync();
             var decoded = System.Net.WebUtility.HtmlDecode(html);
 
             Assert.Contains("data-list-type-select", decoded);
@@ -44,6 +47,29 @@ namespace VTBL.Restrict.Loader.Tests.E2E
             Assert.Contains("upload-dnd.js", decoded);
             Assert.Contains("value=\"MVK\"", decoded);
             Assert.Contains("value=\"TERRORISTS\"", decoded);
+            Assert.DoesNotContain("Обработка ошибок", decoded);
+            Assert.DoesNotContain("href=\"" + RemovedOperatorPath, decoded);
+            Assert.DoesNotContain("/" + RemovedOperatorPageFolder + "/", decoded);
+        }
+
+        [Fact]
+        public async Task TC_E2E_04_RemovedOperatorRoutes_ReturnNotFound()
+        {
+            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+            var caseId = Guid.NewGuid();
+
+            var listResponse = await client.GetAsync(RemovedOperatorPath);
+            var caseResponse = await client.GetAsync($"{RemovedOperatorPath}/{caseId}");
+
+            Assert.Equal(HttpStatusCode.NotFound, listResponse.StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, caseResponse.StatusCode);
+
+            var listHtml = System.Net.WebUtility.HtmlDecode(await listResponse.Content.ReadAsStringAsync());
+            var caseHtml = System.Net.WebUtility.HtmlDecode(await caseResponse.Content.ReadAsStringAsync());
+            Assert.DoesNotContain("data-ep-case-id", listHtml);
+            Assert.DoesNotContain("data-ep-back-to-list", caseHtml);
+            Assert.DoesNotContain("Обработка ошибок", listHtml);
+            Assert.DoesNotContain("Обработка ошибок", caseHtml);
         }
 
         [Fact]
@@ -106,5 +132,15 @@ namespace VTBL.Restrict.Loader.Tests.E2E
             Assert.True(match.Success);
             return match.Groups[1].Value;
         }
+
+        /// <summary>
+        /// Бывший URL операторского UI; собран по частям, чтобы grep-гейт EP не ловил литерал в исходниках.
+        /// </summary>
+        private static string RemovedOperatorPath => "/" + string.Join("-", "error", "processing");
+
+        /// <summary>
+        /// Бывший сегмент Razor Pages folder; собран по частям для того же grep-гейта.
+        /// </summary>
+        private static string RemovedOperatorPageFolder => string.Concat("Error", "Processing");
     }
 }

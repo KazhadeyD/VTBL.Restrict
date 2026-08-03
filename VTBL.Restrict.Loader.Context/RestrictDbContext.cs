@@ -12,8 +12,6 @@ namespace VTBL.Restrict.Loader.Context
 
         public DbSet<ListTypeEntity> ListTypes { get; set; }
         public DbSet<UploadBatchEntity> UploadBatches { get; set; }
-        public DbSet<ErrorProcessingCaseEntity> ErrorProcessingCases { get; set; }
-        public DbSet<ErrorProcessingItemEntity> ErrorProcessingItems { get; set; }
         public DbSet<RcListEntryEntity> RcListEntries { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -43,34 +41,6 @@ namespace VTBL.Restrict.Loader.Context
                 e.HasOne(x => x.ListType)
                     .WithMany(x => x.UploadBatches)
                     .HasForeignKey(x => x.ListTypeId);
-            });
-
-            modelBuilder.Entity<ErrorProcessingCaseEntity>(e =>
-            {
-                e.ToTable("ErrorProcessingCase", "restrict");
-                e.HasKey(x => x.ErrorProcessingCaseId);
-                e.Property(x => x.ErrorProcessingCaseId).HasDefaultValueSql("NEWSEQUENTIALID()");
-                e.Property(x => x.AccessTokenHash).HasMaxLength(32).IsRequired();
-                e.Property(x => x.Status).HasMaxLength(32).IsRequired();
-                e.Property(x => x.SourceFilePath).HasMaxLength(1024);
-                e.Property(x => x.CreatedBy).HasMaxLength(256);
-                e.Property(x => x.ResolvedBy).HasMaxLength(256);
-                e.HasOne(x => x.ListType)
-                    .WithMany(x => x.ErrorProcessingCases)
-                    .HasForeignKey(x => x.ListTypeId);
-                e.HasMany(x => x.Items)
-                    .WithOne(x => x.Case)
-                    .HasForeignKey(x => x.ErrorProcessingCaseId)
-                    .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            modelBuilder.Entity<ErrorProcessingItemEntity>(e =>
-            {
-                e.ToTable("ErrorProcessingItem", "restrict");
-                e.HasKey(x => x.ErrorProcessingItemId);
-                e.Property(x => x.ErrorProcessingItemId).HasDefaultValueSql("NEWSEQUENTIALID()");
-                e.Property(x => x.FieldCode).HasMaxLength(128).IsRequired();
-                e.Property(x => x.ParserMessage).HasMaxLength(1024);
             });
 
             modelBuilder.Entity<RcListEntryEntity>(e =>

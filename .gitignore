@@ -44,3 +44,5 @@ appsettings.*.local.json
 
 # Local smoke uploads
 .smoke-data/
+
+docs/implementation/

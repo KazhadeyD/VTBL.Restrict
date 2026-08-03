@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VTBL.Restrict.Loader.Application.Abstractions;
-using VTBL.Restrict.Loader.Application.ErrorProcessing;
 using VTBL.Restrict.Loader.Application.Options;
 using VTBL.Restrict.Loader.Application.Uploads;
 using VTBL.Restrict.Loader.Context;
@@ -23,7 +22,7 @@ namespace VTBL.Restrict.Loader.Infrastructure
         }
 
         /// <summary>
-        /// ListType/Batch/EP: EF (<see cref="RestrictDbContext"/>) при RestrictDb, иначе InMemory.
+        /// ListType/Batch: EF (<see cref="RestrictDbContext"/>) при RestrictDb, иначе InMemory.
         /// Notifier: RabbitMQ при Host, иначе InMemory no-op.
         /// </summary>
         public static IServiceCollection AddRestrictInfrastructure(this IServiceCollection services, IConfiguration configuration)
@@ -48,7 +47,6 @@ namespace VTBL.Restrict.Loader.Infrastructure
             {
                 services.AddSingleton<IListTypeReadStore>(_ => new InMemoryListTypeReadStore());
                 services.AddSingleton<IUploadBatchStore, InMemoryUploadBatchStore>();
-                services.AddSingleton<IErrorProcessingStore, InMemoryErrorProcessingCaseStore>();
             }
 
             services.AddSingleton<IUploadPathBuilder, UploadPathBuilder>();
@@ -66,9 +64,6 @@ namespace VTBL.Restrict.Loader.Infrastructure
 
             services.AddTransient<UploadRestrictFileCommand>();
             services.AddTransient<RetryUploadNotificationCommand>();
-            services.AddTransient<GetErrorProcessingForOperatorQuery>();
-            services.AddTransient<ListPendingErrorProcessingCasesQuery>();
-            services.AddTransient<ResolveErrorProcessingCommand>();
 
             return services;
         }

@@ -10,7 +10,8 @@ namespace VTBL.Restrict.Loader.Context
     public static class DependencyInjection
     {
         /// <summary>
-        /// Регистрирует <see cref="RestrictDbContext"/> и EF-реализации портов Application.
+        /// Регистрирует <see cref="RestrictDbContext"/> и EF-реализации портов Application
+        /// (ListType, UploadBatch). Без Error Processing.
         /// </summary>
         public static IServiceCollection AddRestrictContext(
             this IServiceCollection services,
@@ -28,7 +29,6 @@ namespace VTBL.Restrict.Loader.Context
 
             services.AddScoped<IListTypeReadStore, EfListTypeReadStore>();
             services.AddScoped<IUploadBatchStore, EfUploadBatchStore>();
-            services.AddScoped<IErrorProcessingStore, EfErrorProcessingCaseStore>();
 
             return services;
         }

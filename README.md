@@ -1,6 +1,6 @@
 # VTBL.Restrict.Loader
 
-UI для работы с **рестриктивными списками** (МВК, Террористы и др.): загрузка Excel/CSV на удалённую папку **as is** (без разбора содержимого), уведомление сервиса парсинга через RabbitMQ, **обработка ошибок** по ссылке из письма с данными из БД.
+UI для работы с **рестриктивными списками** (МВК, Террористы и др.): загрузка Excel/CSV на удалённую папку **as is** (без разбора содержимого) и уведомление сервиса парсинга через RabbitMQ (включая retry).
 
 Парсинг и интерпретация содержимого файлов в этом сервисе **не выполняются**.
 
@@ -11,9 +11,9 @@ UI для работы с **рестриктивными списками** (М�
 | `VTBL.Restrict.Loader.sln` | Solution Visual Studio (целевой TFM: **net5.0**) |
 | `VTBL.Restrict.Loader.UI` | Веб-приложение (Razor Pages, `.NET 5.0`) |
 | `VTBL.Restrict.Loader.Domain` | Доменные enums/value helpers |
-| `VTBL.Restrict.Loader.Application` | Сценарии upload/error-processing, порты (interfaces) |
-| `VTBL.Restrict.Loader.Context` | EF Core: `RestrictDbContext`, сущности, EF-stores |
-| `VTBL.Restrict.Loader.Infrastructure` | Файловая шара, RabbitMQ, InMemory-заглушки; подключает Context при RestrictDb |
+| `VTBL.Restrict.Loader.Application` | Сценарии upload / retry notify, порты (interfaces), observability upload/publish/retry |
+| `VTBL.Restrict.Loader.Context` | EF Core: `RestrictDbContext`, ListType/UploadBatch/RcListEntry |
+| `VTBL.Restrict.Loader.Infrastructure` | Файловая шара, RabbitMQ, InMemory ListType/Batch; подключает Context при RestrictDb |
 | `tests/VTBL.Restrict.Loader.Tests` | Канонический E2E-скелет (WebApplicationFactory, stub expectations) |
 | `tests/VTBL.Restrict.Loader.Application.Tests` | Модульные тесты Application stubs |
 | `tests/VTBL.Restrict.Loader.UI.Tests` | Unit-тесты PageModels |
@@ -26,7 +26,7 @@ UI для работы с **рестриктивными списками** (М�
 
 ## Observability
 
-Ключевые операции **upload / publish / retry / open / save** пишут structured logs (`ILogger`) с корреляцией: `correlationId`, `caseId`, `listType`, код ошибки. Сырой query `token` и значения `UserValue` в логи не попадают (только `tokenPresent=present|absent`). Маскирование PII шире — security epic (deferred).
+Ключевые операции **upload / publish / retry** пишут structured logs (`ILogger`) с корреляцией: `correlationId`, `listType`, код ошибки.
 
 ## Запуск (Docker MSSQL + UI)
 
@@ -49,6 +49,13 @@ dotnet test VTBL.Restrict.Loader.sln
 ## История изменений
 
 ### 03.08.2026
+- Финальная верификация эпика UC-RM (задача 5.1): `dotnet build`/`dotnet test` green (51), grep EP/observability-маркеров = 0, DDL/docker без ErrorProcessing*, Docker `down -v`+init EpTableCount=0, UI smoke Upload 200 / бывшие EP-URL 404; commit не создавался исполнителем
+- Удалён **Error Processing** из Loader (UI / Application / Domain / Context / Infrastructure / тесты / DDL / docs); продукт — только upload → FileShare + RMQ + retry; UC-03/UC-04 superseded; SpecialCase не возвращается (эпик UC-RM, docs supersession — задача 4.1)
+- UC-RM-05 (этап 3.1, Вариант A): вычищены ErrorProcessing* из `docs/db/05-ddl.sql` / `docker/mssql/init/02-schema.sql`; удалены `04-ep-index-*` и migration `*ErrorProcessing*`; обновлены docs/db domain/ER/physical/access, init README, runbook (`docker compose down -v` + чистый init — единственный канон очистки volume); DROP-миграция не создавалась; сохранены ListType (+ seed), UploadBatch, RcListEntry
+- UC-RM-02 (этап 2.3): удалены Application ErrorProcessing / `IErrorProcessingStore`, Domain `ErrorProcessingStatus` / `AccessTokenHasher`, EP-only observability (`BeginOpen`/`BeginSave`/`BeginList`, `SensitiveLog`, `KeyCaseId`/`KeyTokenPresent`); сохранены BeginUpload/Publish/Retry
+- UC-RM-03 (этап 2.2): удалены EF/InMemory EP stores, EP DbSet/Fluent и DI-регистрации EP (store/commands/queries); порт `IErrorProcessingStore` и Application EP остаются до 2.3
+- UC-RM-01 (этап 2.1): удалены Razor Pages `/error-processing*`, `ErrorProcessingFormModel` и пункт navbar «Обработка ошибок»; Upload E2E проверяет отсутствие EP в HTML и non-success на бывших маршрутах
+- UC-RM-04 (этап 1.1): удалены EP-тесты и EP-fake harness из `tests/`; вычищены смешанные `RestrictWebAppFactory`, `CorrelationLoggingTests`, `ApplicationStubCommandsTests` — тестовый контур только Upload/Retry/ListType/observability upload
 - Полный rename: папка / solution / проекты / namespaces `VTBL.Restrict` → `VTBL.Restrict.Loader` (типы вроде `RestrictDbContext`, БД `VTBL_Restrict`, Docker-сервисы без изменений имени)
 
 ### 27.07.2026

@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using VTBL.Restrict.Loader.Application.Abstractions;
 using VTBL.Restrict.Loader.Infrastructure.Stub;
-using VTBL.Restrict.Loader.Tests.Fakes;
 using VTBL.Restrict.Loader.UI;
 
 namespace VTBL.Restrict.Loader.Tests.Infrastructure
@@ -30,14 +29,11 @@ namespace VTBL.Restrict.Loader.Tests.Infrastructure
             Directory.CreateDirectory(TestRemoteRoot);
             UploadBatchStore = new InMemoryUploadBatchStore();
             TrackingNotifier = new TrackingUploadNotifier();
-            ErrorProcessingStore = new InMemoryErrorProcessingCaseStore();
         }
 
         public string TestRemoteRoot { get; }
 
         public InMemoryUploadBatchStore UploadBatchStore { get; }
-
-        public InMemoryErrorProcessingCaseStore ErrorProcessingStore { get; }
 
         public TrackingUploadNotifier TrackingNotifier { get; }
 
@@ -65,9 +61,6 @@ namespace VTBL.Restrict.Loader.Tests.Infrastructure
 
                 services.RemoveAll<IUploadNotifier>();
                 services.AddSingleton<IUploadNotifier>(TrackingNotifier);
-
-                services.RemoveAll<IErrorProcessingStore>();
-                services.AddSingleton<IErrorProcessingStore>(ErrorProcessingStore);
             });
         }
 

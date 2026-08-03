@@ -16,6 +16,6 @@ namespace VTBL.Restrict.Loader.Context.Entities
         public DateTime CreatedAt { get; set; }
 
         public ICollection<UploadBatchEntity> UploadBatches { get; set; }
-        public ICollection<ErrorProcessingCaseEntity> ErrorProcessingCases { get; set; }
     }
 }
+
