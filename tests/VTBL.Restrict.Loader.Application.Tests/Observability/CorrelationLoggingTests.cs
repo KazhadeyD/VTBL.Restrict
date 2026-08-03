@@ -30,7 +30,6 @@ namespace VTBL.Restrict.Loader.Application.Tests.Observability
                 }),
                 new UploadPathBuilder(),
                 new UncFileShareStore(),
-                harness.BatchStore,
                 harness.Notifier,
                 logger);
 

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace VTBL.Restrict.Loader.Context.Entities
@@ -14,8 +13,5 @@ namespace VTBL.Restrict.Loader.Context.Entities
         public string RoutingKeySuffix { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
-
-        public ICollection<UploadBatchEntity> UploadBatches { get; set; }
     }
 }
-

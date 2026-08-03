@@ -1,12 +1,9 @@
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VTBL.Restrict.Loader.Application.Abstractions;
 using VTBL.Restrict.Loader.Application.Options;
 using VTBL.Restrict.Loader.Application.Uploads;
-using VTBL.Restrict.Loader.Domain.Enums;
 using VTBL.Restrict.Loader.Application.Tests.Support;
 using VTBL.Restrict.Loader.Infrastructure.Files;
 using VTBL.Restrict.Loader.Infrastructure.Stub;
@@ -21,17 +18,15 @@ namespace VTBL.Restrict.Loader.Application.Tests.Uploads
     public sealed class UploadRestrictFileCommandFlowTests
     {
         [Fact]
-        public async Task ExecuteAsync_HappyPath_CallOrder_WriteInsertPublish()
+        public async Task ExecuteAsync_HappyPath_CallOrder_WriteThenPublish()
         {
             var remoteRoot = CreateTempRoot();
             var tracker = new OrderSequenceTracker();
-            var batchTracker = new OrderTrackingUploadBatchStore(tracker);
             var command = new UploadRestrictFileCommand(
                 new InMemoryListTypeReadStore(),
                 MsOptions.Create(CreateOptions(remoteRoot)),
                 new UploadPathBuilder(),
                 new OrderTrackingFileShareStore(new UncFileShareStore(), tracker),
-                batchTracker,
                 new TrackingUploadNotifierWithOrder(tracker));
 
             await using var stream = new MemoryStream(new byte[] { 1, 2, 3 });
@@ -39,36 +34,11 @@ namespace VTBL.Restrict.Loader.Application.Tests.Uploads
 
             Assert.True(result.Success);
             Assert.Equal(1, tracker.WriteOrder);
-            Assert.Equal(2, tracker.InsertOrder);
-            Assert.Equal(3, tracker.PublishOrder);
-            Assert.Equal(NotifyStatus.Published, (await batchTracker.Inner.GetByCorrelationIdAsync(result.CorrelationId.Value, CancellationToken.None)).NotifyStatus);
+            Assert.Equal(2, tracker.PublishOrder);
         }
 
         [Fact]
-        public async Task ExecuteAsync_InsertFailAfterWrite_NoPublish()
-        {
-            var remoteRoot = CreateTempRoot();
-            var notifier = new TrackingUploadNotifier();
-            var command = new UploadRestrictFileCommand(
-                new InMemoryListTypeReadStore(),
-                MsOptions.Create(CreateOptions(remoteRoot)),
-                new UploadPathBuilder(),
-                new UncFileShareStore(),
-                new FailingInsertUploadBatchStore(),
-                notifier);
-
-            await using var stream = new MemoryStream(new byte[] { 1, 2, 3 });
-            var result = await command.ExecuteAsync(CreateRequest(stream), CancellationToken.None);
-
-            Assert.False(result.Success);
-            Assert.Equal(UploadErrorCodes.Db, result.ErrorCode);
-            Assert.NotNull(result.CorrelationId);
-            Assert.True(File.Exists(result.StoredFilePath));
-            Assert.Equal(0, notifier.PublishCallCount);
-        }
-
-        [Fact]
-        public async Task ExecuteAsync_PublishFailAfterWriteAndInsert_NotifyStatusFailed_FileRemains()
+        public async Task ExecuteAsync_PublishFailAfterWrite_FileRemains()
         {
             var harness = UploadCommandTestSupport.CreateHarness(notifierFails: true);
             await using var stream = new MemoryStream(new byte[] { 4, 5, 6 });
@@ -77,10 +47,7 @@ namespace VTBL.Restrict.Loader.Application.Tests.Uploads
             Assert.False(result.Success);
             Assert.Equal(UploadErrorCodes.Rmq, result.ErrorCode);
             Assert.True(File.Exists(result.StoredFilePath));
-
-            var batch = await harness.BatchStore.GetByCorrelationIdAsync(result.CorrelationId.Value, CancellationToken.None);
-            Assert.NotNull(batch);
-            Assert.Equal(NotifyStatus.Failed, batch.NotifyStatus);
+            Assert.NotNull(result.CorrelationId);
         }
 
         [Fact]
@@ -103,7 +70,7 @@ namespace VTBL.Restrict.Loader.Application.Tests.Uploads
         }
 
         [Fact]
-        public async Task ExecuteAsync_ShareFail_NoBatchNoPublish()
+        public async Task ExecuteAsync_ShareFail_NoPublish()
         {
             var remoteRoot = CreateTempRoot();
             var notifier = new TrackingUploadNotifier();
@@ -112,7 +79,6 @@ namespace VTBL.Restrict.Loader.Application.Tests.Uploads
                 MsOptions.Create(CreateOptions(remoteRoot)),
                 new UploadPathBuilder(),
                 new FailingFileShareStoreForUnit(),
-                new InMemoryUploadBatchStore(),
                 notifier);
 
             await using var stream = new MemoryStream(new byte[] { 1 });

@@ -25,16 +25,6 @@ namespace VTBL.Restrict.Loader.UI.Tests.Unit
         }
 
         [Fact]
-        public void ShouldShowRetry_OnlyForRmqWithCorrelationId()
-        {
-            Assert.True(UploadErrorMessageMapper.ShouldShowRetry(false, UploadErrorCodes.Rmq, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
-            Assert.False(UploadErrorMessageMapper.ShouldShowRetry(true, UploadErrorCodes.Rmq, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
-            Assert.False(UploadErrorMessageMapper.ShouldShowRetry(false, UploadErrorCodes.Share, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
-            Assert.False(UploadErrorMessageMapper.ShouldShowRetry(false, UploadErrorCodes.Rmq, null));
-            Assert.False(UploadErrorMessageMapper.ShouldShowRetry(false, UploadErrorCodes.Validation, "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"));
-        }
-
-        [Fact]
         public void Map_DoesNotContainStackTraceMarkers()
         {
             var text = UploadErrorMessageMapper.Map(UploadErrorCodes.Unexpected, "boom");

@@ -22,7 +22,7 @@ namespace VTBL.Restrict.Loader.Infrastructure
         }
 
         /// <summary>
-        /// ListType/Batch: EF (<see cref="RestrictDbContext"/>) при RestrictDb, иначе InMemory.
+        /// ListType: EF (<see cref="RestrictDbContext"/>) при RestrictDb, иначе InMemory.
         /// Notifier: RabbitMQ при Host, иначе InMemory no-op.
         /// </summary>
         public static IServiceCollection AddRestrictInfrastructure(this IServiceCollection services, IConfiguration configuration)
@@ -46,7 +46,6 @@ namespace VTBL.Restrict.Loader.Infrastructure
             else
             {
                 services.AddSingleton<IListTypeReadStore>(_ => new InMemoryListTypeReadStore());
-                services.AddSingleton<IUploadBatchStore, InMemoryUploadBatchStore>();
             }
 
             services.AddSingleton<IUploadPathBuilder, UploadPathBuilder>();
@@ -63,7 +62,6 @@ namespace VTBL.Restrict.Loader.Infrastructure
             }
 
             services.AddTransient<UploadRestrictFileCommand>();
-            services.AddTransient<RetryUploadNotificationCommand>();
 
             return services;
         }

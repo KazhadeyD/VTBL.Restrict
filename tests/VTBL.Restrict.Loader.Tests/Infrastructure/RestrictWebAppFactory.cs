@@ -16,7 +16,7 @@ using VTBL.Restrict.Loader.UI;
 namespace VTBL.Restrict.Loader.Tests.Infrastructure
 {
     /// <summary>
-    /// Test host: InMemory ListType/Batch + tracking notifier + temp RemoteRoot.
+    /// Test host: InMemory ListType + tracking notifier + temp RemoteRoot.
     /// </summary>
     public sealed class RestrictWebAppFactory : WebApplicationFactory<Program>
     {
@@ -27,13 +27,10 @@ namespace VTBL.Restrict.Loader.Tests.Infrastructure
                 "VTBL.Restrict.Loader.Tests",
                 Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(TestRemoteRoot);
-            UploadBatchStore = new InMemoryUploadBatchStore();
             TrackingNotifier = new TrackingUploadNotifier();
         }
 
         public string TestRemoteRoot { get; }
-
-        public InMemoryUploadBatchStore UploadBatchStore { get; }
 
         public TrackingUploadNotifier TrackingNotifier { get; }
 
@@ -55,9 +52,6 @@ namespace VTBL.Restrict.Loader.Tests.Infrastructure
             {
                 services.RemoveAll<IListTypeReadStore>();
                 services.AddSingleton<IListTypeReadStore>(_ => new InMemoryListTypeReadStore());
-
-                services.RemoveAll<IUploadBatchStore>();
-                services.AddSingleton<IUploadBatchStore>(UploadBatchStore);
 
                 services.RemoveAll<IUploadNotifier>();
                 services.AddSingleton<IUploadNotifier>(TrackingNotifier);

@@ -12,14 +12,5 @@
         {
             <div class="mt-1"><small data-correlation-id>correlationId: @Model.CorrelationIdText</small></div>
         }
-        @if (Model.ShowRetry)
-        {
-            <form method="post" asp-page="/Upload/Retry" class="mt-2" data-retry-form="true">
-                <input type="hidden" name="correlationId" value="@Model.CorrelationIdText" />
-                <button type="submit" class="btn btn-sm btn-outline-secondary" data-retry-button="true">
-                    Повторить уведомление
-                </button>
-            </form>
-        }
     </div>
 }

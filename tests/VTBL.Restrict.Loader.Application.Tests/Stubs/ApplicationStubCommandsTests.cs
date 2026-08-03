@@ -2,17 +2,14 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using VTBL.Restrict.Loader.Application.Abstractions;
 using VTBL.Restrict.Loader.Application.Uploads;
 using VTBL.Restrict.Loader.Application.Tests.Support;
-using VTBL.Restrict.Loader.Domain.Enums;
-using VTBL.Restrict.Loader.Infrastructure.Stub;
 using Xunit;
 
 namespace VTBL.Restrict.Loader.Application.Tests.Stubs
 {
     /// <summary>
-    /// Коды результатов команд и запросов. Загрузка пишет в временный RemoteRoot.
+    /// Коды результатов команд. Загрузка пишет в временный RemoteRoot.
     /// </summary>
     public sealed class ApplicationStubCommandsTests
     {
@@ -53,34 +50,6 @@ namespace VTBL.Restrict.Loader.Application.Tests.Stubs
 
             Assert.False(result.Success);
             Assert.Equal("Validation", result.ErrorCode);
-        }
-
-        [Fact]
-        public async Task RetryUploadNotificationCommand_Failed_Republishes()
-        {
-            var correlationId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-            var batchStore = new InMemoryUploadBatchStore();
-            await batchStore.InsertPendingAsync(new UploadBatchRecord
-            {
-                CorrelationId = correlationId,
-                ListTypeId = 1,
-                ListTypeCode = "MVK",
-                OriginalFileName = "a.xlsx",
-                StoredFilePath = @"C:\a.xlsx",
-                UploadedAtUtc = DateTime.UtcNow
-            }, CancellationToken.None);
-            await batchStore.UpdateNotifyStatusAsync(correlationId, NotifyStatus.Failed, CancellationToken.None);
-
-            var command = new RetryUploadNotificationCommand(
-                batchStore,
-                new InMemoryListTypeReadStore(),
-                new TrackingUploadNotifier());
-
-            var result = await command.ExecuteAsync(correlationId, CancellationToken.None);
-
-            Assert.True(result.Success);
-            Assert.Equal(correlationId, result.CorrelationId);
-            Assert.Contains("повторно", result.Message);
         }
     }
 }

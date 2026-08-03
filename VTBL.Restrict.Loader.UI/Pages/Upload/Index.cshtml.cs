@@ -44,8 +44,6 @@ namespace VTBL.Restrict.Loader.UI.Pages.Upload
 
         public string ErrorCode { get; private set; }
 
-        public bool ShowRetry { get; private set; }
-
         public async Task OnGetAsync(CancellationToken cancellationToken)
         {
             await PopulateListTypesAsync(cancellationToken);
@@ -101,7 +99,6 @@ namespace VTBL.Restrict.Loader.UI.Pages.Upload
                 UploadErrorCodes.Validation,
                 "Проверьте введённые данные: укажите тип списка и файл.");
             CorrelationIdText = null;
-            ShowRetry = false;
         }
 
         private void ApplyCommandResult(UploadRestrictFileResult result)
@@ -113,10 +110,6 @@ namespace VTBL.Restrict.Loader.UI.Pages.Upload
             ResultMessage = result.Success
                 ? (result.Message ?? "Файл успешно загружен и передан на обработку.")
                 : UploadErrorMessageMapper.Map(result.ErrorCode, result.Message);
-            ShowRetry = UploadErrorMessageMapper.ShouldShowRetry(
-                result.Success,
-                result.ErrorCode,
-                CorrelationIdText);
         }
 
         private async Task PopulateListTypesAsync(CancellationToken cancellationToken)

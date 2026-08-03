@@ -8,9 +8,6 @@ namespace VTBL.Restrict.Loader.Application.Uploads
         public const string Validation = "Validation";
         public const string Share = "Share";
         public const string Rmq = "Rmq";
-        public const string Db = "Db";
-        public const string NotFound = "NotFound";
-        public const string Conflict = "Conflict";
         public const string Unexpected = "Unexpected";
     }
 }

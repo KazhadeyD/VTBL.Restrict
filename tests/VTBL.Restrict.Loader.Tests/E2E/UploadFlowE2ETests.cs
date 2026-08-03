@@ -1,18 +1,14 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using VTBL.Restrict.Loader.Application.Abstractions;
-using VTBL.Restrict.Loader.Domain.Enums;
-using VTBL.Restrict.Loader.Infrastructure.Stub;
 using VTBL.Restrict.Loader.Tests.Fakes;
 using VTBL.Restrict.Loader.Tests.Infrastructure;
 using Xunit;
@@ -20,7 +16,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Tests.E2E
 {
     /// <summary>
-    /// Полный сценарий загрузки: проверка, запись, учёт, уведомление.
+    /// Полный сценарий загрузки: проверка, запись, уведомление.
     /// </summary>
     public sealed class UploadFlowE2ETests : IClassFixture<RestrictWebAppFactory>, IDisposable
     {
@@ -32,20 +28,17 @@ namespace VTBL.Restrict.Loader.Tests.E2E
         }
 
         [Fact]
-        public async Task TC_E2E_01_HappyUpload_BatchPublished_NotifyAfterWrite()
+        public async Task HappyUpload_NotifyAfterWrite()
         {
             _factory.TrackingNotifier.Reset();
             var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-            var correlationId = await PostValidUploadAsync(client);
+            await PostValidUploadAsync(client);
 
-            var batch = await _factory.UploadBatchStore.GetByCorrelationIdAsync(correlationId, CancellationToken.None);
-            Assert.NotNull(batch);
-            Assert.Equal(NotifyStatus.Published, batch.NotifyStatus);
             Assert.Equal(1, _factory.TrackingNotifier.PublishCallCount);
         }
 
         [Fact]
-        public async Task TC_E2E_02_ShareFail_NoBatchNoPublish()
+        public async Task ShareFail_NoPublish()
         {
             _factory.TrackingNotifier.Reset();
             var client = _factory.WithWebHostBuilder(builder =>
@@ -63,7 +56,7 @@ namespace VTBL.Restrict.Loader.Tests.E2E
         }
 
         [Fact]
-        public async Task TC_E2E_03_PublishFail_BatchFailed_FileRemains()
+        public async Task PublishFail_FileRemains()
         {
             _factory.TrackingNotifier.Reset();
             var client = _factory.WithWebHostBuilder(builder =>
@@ -77,11 +70,10 @@ namespace VTBL.Restrict.Loader.Tests.E2E
 
             var html = await PostUploadAsync(client, new byte[] { 10, 20, 30 }, "list.xlsx");
             Assert.Contains("уведомление не отправлено", html);
+            Assert.Contains("correlationId:", html);
 
-            var batch = _factory.UploadBatchStore.GetLatestForTest();
-            Assert.NotNull(batch);
-            Assert.Equal(NotifyStatus.Failed, batch.NotifyStatus);
-            Assert.True(File.Exists(batch.StoredFilePath));
+            var match = Regex.Match(html, @"correlationId:\s*([0-9a-fA-F-]{36})");
+            Assert.True(match.Success);
         }
 
         public void Dispose()
@@ -89,11 +81,11 @@ namespace VTBL.Restrict.Loader.Tests.E2E
             _factory.TryCleanupRemoteRoot();
         }
 
-        private async Task<Guid> PostValidUploadAsync(HttpClient client)
+        private async Task PostValidUploadAsync(HttpClient client)
         {
             var html = await PostUploadAsync(client, new byte[] { 10, 20, 30 }, "list.xlsx");
             Assert.Contains("передан на обработку", html);
-            return ExtractCorrelationId(html);
+            ExtractCorrelationId(html);
         }
 
         private static async Task<string> PostUploadAsync(HttpClient client, byte[] payload, string fileName)

@@ -14,7 +14,7 @@ using AppNotifyMessage = VTBL.Restrict.Loader.Application.Abstractions.RestrictF
 namespace VTBL.Restrict.Loader.Application.Uploads
 {
     /// <summary>
-    /// Сценарий первичной загрузки: проверка, запись файла, учёт партии, уведомление.
+    /// Сценарий загрузки: проверка, запись файла, уведомление. В БД ничего не пишем.
     /// </summary>
     public class UploadRestrictFileCommand
     {
@@ -22,7 +22,6 @@ namespace VTBL.Restrict.Loader.Application.Uploads
         private readonly RestrictStorageOptions _storageOptions;
         private readonly IUploadPathBuilder _pathBuilder;
         private readonly IFileShareStore _fileShareStore;
-        private readonly IUploadBatchStore _uploadBatchStore;
         private readonly IUploadNotifier _uploadNotifier;
         private readonly ILogger _logger;
 
@@ -31,7 +30,6 @@ namespace VTBL.Restrict.Loader.Application.Uploads
             IOptions<RestrictStorageOptions> storageOptions,
             IUploadPathBuilder pathBuilder,
             IFileShareStore fileShareStore,
-            IUploadBatchStore uploadBatchStore,
             IUploadNotifier uploadNotifier,
             ILogger<UploadRestrictFileCommand> logger = null)
         {
@@ -39,13 +37,12 @@ namespace VTBL.Restrict.Loader.Application.Uploads
             _storageOptions = storageOptions?.Value ?? new RestrictStorageOptions();
             _pathBuilder = pathBuilder;
             _fileShareStore = fileShareStore;
-            _uploadBatchStore = uploadBatchStore;
             _uploadNotifier = uploadNotifier;
             _logger = logger ?? NullLogger<UploadRestrictFileCommand>.Instance;
         }
 
         /// <summary>
-        /// Параметрless ctor для узких unit-тестов счётчика. Не использовать в DI.
+        /// Конструктор без зависимостей для узких unit-тестов счётчика. Не использовать в DI.
         /// </summary>
         protected UploadRestrictFileCommand()
         {
@@ -53,12 +50,10 @@ namespace VTBL.Restrict.Loader.Application.Uploads
             _storageOptions = new RestrictStorageOptions();
             _pathBuilder = null;
             _fileShareStore = null;
-            _uploadBatchStore = null;
             _uploadNotifier = null;
             _logger = NullLogger<UploadRestrictFileCommand>.Instance;
         }
 
-        /// <inheritdoc cref="ExecuteAsync"/>
         public virtual async Task<UploadRestrictFileResult> ExecuteAsync(
             UploadRestrictFileRequest request,
             CancellationToken cancellationToken)
@@ -145,32 +140,6 @@ namespace VTBL.Restrict.Loader.Application.Uploads
                             listType.Code);
                     }
 
-                    try
-                    {
-                        await _uploadBatchStore.InsertPendingAsync(
-                            new UploadBatchRecord
-                            {
-                                CorrelationId = correlationId,
-                                ListTypeId = listType.ListTypeId,
-                                ListTypeCode = listType.Code,
-                                OriginalFileName = request.OriginalFileName,
-                                StoredFilePath = storedPath,
-                                UploadedBy = request.UploadedBy,
-                                UploadedAtUtc = utcNow,
-                                NotifyStatus = Domain.Enums.NotifyStatus.Pending
-                            },
-                            cancellationToken).ConfigureAwait(false);
-                    }
-                    catch (Exception)
-                    {
-                        return LogPartialFail(
-                            UploadErrorCodes.Db,
-                            "Файл сохранён, но не удалось зарегистрировать загрузку в БД.",
-                            correlationId,
-                            storedPath,
-                            listType.Code);
-                    }
-
                     var notifyMessage = new AppNotifyMessage
                     {
                         MessageType = "RestrictFileUploaded",
@@ -197,11 +166,6 @@ namespace VTBL.Restrict.Loader.Application.Uploads
                             await _uploadNotifier.PublishUploadedAsync(notifyMessage, routingKey, cancellationToken)
                                 .ConfigureAwait(false);
 
-                            await _uploadBatchStore.UpdateNotifyStatusAsync(
-                                correlationId,
-                                Domain.Enums.NotifyStatus.Published,
-                                cancellationToken).ConfigureAwait(false);
-
                             _logger.LogInformation(
                                 "Upload publish succeeded correlationId={CorrelationId} listType={ListType}",
                                 correlationId,
@@ -210,8 +174,6 @@ namespace VTBL.Restrict.Loader.Application.Uploads
                     }
                     catch (Exception)
                     {
-                        await TryMarkNotifyFailedAsync(correlationId, cancellationToken).ConfigureAwait(false);
-
                         _logger.LogWarning(
                             "Upload publish failed correlationId={CorrelationId} listType={ListType} errorCode={ErrorCode}",
                             correlationId,
@@ -220,7 +182,7 @@ namespace VTBL.Restrict.Loader.Application.Uploads
 
                         return PartialFail(
                             UploadErrorCodes.Rmq,
-                            "Файл сохранён, но уведомление не отправлено. Повторите уведомление позже.",
+                            "Файл сохранён, но уведомление не отправлено. Обратитесь в поддержку с correlationId.",
                             correlationId,
                             storedPath);
                     }
@@ -254,36 +216,6 @@ namespace VTBL.Restrict.Loader.Application.Uploads
                 correlationId,
                 errorCode);
             return Fail(errorCode, message);
-        }
-
-        private UploadRestrictFileResult LogPartialFail(
-            string errorCode,
-            string message,
-            Guid correlationId,
-            string storedPath,
-            string listType)
-        {
-            _logger.LogWarning(
-                "Upload partial fail listType={ListType} correlationId={CorrelationId} errorCode={ErrorCode}",
-                listType,
-                correlationId,
-                errorCode);
-            return PartialFail(errorCode, message, correlationId, storedPath);
-        }
-
-        private async Task TryMarkNotifyFailedAsync(Guid correlationId, CancellationToken cancellationToken)
-        {
-            try
-            {
-                await _uploadBatchStore.UpdateNotifyStatusAsync(
-                    correlationId,
-                    Domain.Enums.NotifyStatus.Failed,
-                    cancellationToken).ConfigureAwait(false);
-            }
-            catch
-            {
-                // Best-effort: batch row exists with Pending if UPDATE fails.
-            }
         }
 
         private static UploadRestrictFileResult Fail(string errorCode, string message)

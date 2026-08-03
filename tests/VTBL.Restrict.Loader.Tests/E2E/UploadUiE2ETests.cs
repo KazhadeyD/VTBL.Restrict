@@ -15,7 +15,7 @@ using Xunit;
 namespace VTBL.Restrict.Loader.Tests.E2E
 {
     /// <summary>
-    /// UI загрузки: элементы управления, валидация, повтор уведомления.
+    /// UI загрузки: элементы управления и валидация.
     /// </summary>
     public sealed class UploadUiE2ETests : IClassFixture<RestrictWebAppFactory>
     {
@@ -96,7 +96,7 @@ namespace VTBL.Restrict.Loader.Tests.E2E
         }
 
         [Fact]
-        public async Task TC_E2E_03_RmqFail_ShowsRetryControl()
+        public async Task TC_E2E_03_RmqFail_ShowsErrorAndCorrelationId()
         {
             _factory.TrackingNotifier.Reset();
             var client = _factory.WithWebHostBuilder(builder =>
@@ -120,8 +120,8 @@ namespace VTBL.Restrict.Loader.Tests.E2E
             var html = System.Net.WebUtility.HtmlDecode(await post.Content.ReadAsStringAsync());
 
             Assert.Contains("data-error-code=\"Rmq\"", html);
-            Assert.Contains("data-retry-button", html);
-            Assert.Contains("Повторить уведомление", html);
+            Assert.DoesNotContain("data-retry-button", html);
+            Assert.DoesNotContain("Повторить уведомление", html);
             Assert.Contains("correlationId:", html);
             Assert.DoesNotContain("at VTBL.", html);
         }

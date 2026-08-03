@@ -10,8 +10,7 @@ namespace VTBL.Restrict.Loader.Context
     public static class DependencyInjection
     {
         /// <summary>
-        /// Регистрирует <see cref="RestrictDbContext"/> и EF-реализации портов Application
-        /// (ListType, UploadBatch).
+        /// Регистрирует <see cref="RestrictDbContext"/> и чтение ListType.
         /// </summary>
         public static IServiceCollection AddRestrictContext(
             this IServiceCollection services,
@@ -28,7 +27,6 @@ namespace VTBL.Restrict.Loader.Context
                 options.UseSqlServer(connectionString));
 
             services.AddScoped<IListTypeReadStore, EfListTypeReadStore>();
-            services.AddScoped<IUploadBatchStore, EfUploadBatchStore>();
 
             return services;
         }

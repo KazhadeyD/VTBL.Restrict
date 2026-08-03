@@ -38,20 +38,5 @@ namespace VTBL.Restrict.Loader.Application.Observability
                 [KeyListType] = listType ?? string.Empty
             });
         }
-
-        public static IDisposable BeginRetry(ILogger logger, Guid correlationId, string listType = null)
-        {
-            var state = new Dictionary<string, object>
-            {
-                [KeyOperation] = "retry",
-                [KeyCorrelationId] = correlationId
-            };
-            if (!string.IsNullOrEmpty(listType))
-            {
-                state[KeyListType] = listType;
-            }
-
-            return logger.BeginScope(state);
-        }
     }
 }

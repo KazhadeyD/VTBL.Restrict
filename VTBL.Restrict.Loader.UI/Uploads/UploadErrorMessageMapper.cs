@@ -13,10 +13,8 @@ namespace VTBL.Restrict.Loader.UI.Uploads
                 (errorCode == null ||
                  errorCode == UploadErrorCodes.Validation ||
                  errorCode == UploadErrorCodes.Share ||
-                 errorCode == UploadErrorCodes.Rmq ||
-                 errorCode == UploadErrorCodes.Db))
+                 errorCode == UploadErrorCodes.Rmq))
             {
-                // Prefer concrete command text when already user-safe.
                 return commandMessage.Trim();
             }
 
@@ -27,13 +25,7 @@ namespace VTBL.Restrict.Loader.UI.Uploads
                 case UploadErrorCodes.Share:
                     return "Не удалось сохранить файл на файловый ресурс. Повторите позже или обратитесь в поддержку.";
                 case UploadErrorCodes.Rmq:
-                    return "Файл сохранён, но уведомление сервису обработки не отправлено. Можно повторить уведомление.";
-                case UploadErrorCodes.Db:
-                    return "Файл сохранён, но регистрация загрузки в БД не выполнена. Обратитесь в поддержку с correlationId.";
-                case UploadErrorCodes.NotFound:
-                    return "Загрузка не найдена.";
-                case UploadErrorCodes.Conflict:
-                    return "Уведомление уже отправлено.";
+                    return "Файл сохранён, но уведомление сервису обработки не отправлено. Обратитесь в поддержку с correlationId.";
                 case UploadErrorCodes.Unexpected:
                     return "Произошла непредвиденная ошибка. Обратитесь в поддержку.";
                 default:
@@ -41,16 +33,6 @@ namespace VTBL.Restrict.Loader.UI.Uploads
                         ? "Ошибка загрузки. Обратитесь в поддержку."
                         : commandMessage.Trim();
             }
-        }
-
-        /// <summary>
-        /// Повтор уведомления доступен при сбое публикации после записи файла.
-        /// </summary>
-        public static bool ShouldShowRetry(bool success, string errorCode, string correlationId)
-        {
-            return !success
-                   && !string.IsNullOrWhiteSpace(correlationId)
-                   && errorCode == UploadErrorCodes.Rmq;
         }
 
         public static string FriendlyTitle(bool success, string errorCode)
@@ -68,8 +50,6 @@ namespace VTBL.Restrict.Loader.UI.Uploads
                     return "Ошибка файлового ресурса";
                 case UploadErrorCodes.Rmq:
                     return "Ошибка уведомления";
-                case UploadErrorCodes.Db:
-                    return "Ошибка регистрации";
                 default:
                     return "Ошибка";
             }
