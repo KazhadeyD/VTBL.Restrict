@@ -9,42 +9,28 @@ namespace VTBL.Restrict.Loader.Infrastructure.Messaging
     /// </summary>
     public sealed class RestrictFileUploadedMessage
     {
-        [JsonPropertyName("messageType")]
-        public string MessageType { get; set; }
+        [JsonPropertyName("Method")]
+        public string Method { get; set; }
 
-        [JsonPropertyName("schemaVersion")]
-        public int SchemaVersion { get; set; }
-
-        [JsonPropertyName("correlationId")]
-        public Guid CorrelationId { get; set; }
-
-        [JsonPropertyName("listType")]
-        public string ListType { get; set; }
-
-        [JsonPropertyName("filePath")]
-        public string FilePath { get; set; }
-
-        [JsonPropertyName("originalFileName")]
-        public string OriginalFileName { get; set; }
-
-        [JsonPropertyName("uploadedAtUtc")]
-        public DateTime UploadedAtUtc { get; set; }
-
-        [JsonPropertyName("uploadedBy")]
-        public string UploadedBy { get; set; }
+        [JsonPropertyName("Payload")]
+        public string Payload { get; set; }
 
         public static RestrictFileUploadedMessage FromAppMessage(Application.Abstractions.RestrictFileUploadedMessage source)
         {
+            var payload = new RabbitPayload
+            {
+                SessionId = source.CorrelationId.ToString(),
+                UserId = "stub-user-id",
+                UserName = "stub-user-name",
+                FilePath = source.FilePath,
+                AdditionalInfo = "stub-info",
+                RequestDate = source.UploadedAtUtc.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+            };
+
             return new RestrictFileUploadedMessage
             {
-                MessageType = source.MessageType,
-                SchemaVersion = source.SchemaVersion,
-                CorrelationId = source.CorrelationId,
-                ListType = source.ListType,
-                FilePath = source.FilePath,
-                OriginalFileName = source.OriginalFileName,
-                UploadedAtUtc = source.UploadedAtUtc,
-                UploadedBy = source.UploadedBy
+                Method = "IllegalCompaniesLoaderProcessor",
+                Payload = JsonSerializer.Serialize(payload, SerializerOptions)
             };
         }
 
@@ -57,5 +43,26 @@ namespace VTBL.Restrict.Loader.Infrastructure.Messaging
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
+
+        private sealed class RabbitPayload
+        {
+            [JsonPropertyName("SessionId")]
+            public string SessionId { get; set; }
+
+            [JsonPropertyName("UserId")]
+            public string UserId { get; set; }
+
+            [JsonPropertyName("UserName")]
+            public string UserName { get; set; }
+
+            [JsonPropertyName("FilePath")]
+            public string FilePath { get; set; }
+
+            [JsonPropertyName("AdditionalInfo")]
+            public string AdditionalInfo { get; set; }
+
+            [JsonPropertyName("RequestDate")]
+            public string RequestDate { get; set; }
+        }
     }
 }

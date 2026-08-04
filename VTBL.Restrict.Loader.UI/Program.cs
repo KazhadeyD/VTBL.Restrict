@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using NLog.Web;
 
 namespace VTBL.Restrict.Loader.UI
 {
@@ -24,6 +25,8 @@ namespace VTBL.Restrict.Loader.UI
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                });
+                })
+                .ConfigureLogging(logging => logging.ClearProviders())
+                .UseNLog();
     }
 }

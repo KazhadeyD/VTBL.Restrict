@@ -26,6 +26,19 @@
 
 При загрузке и публикации в лог пишутся `correlationId`, тип списка и код ошибки — чтобы потом можно было разобрать инцидент.
 
+## Формат сообщения в RabbitMQ
+
+Публикуется JSON-объект следующего вида:
+
+```json
+{
+  "Method": "IllegalCompaniesLoaderProcessor",
+  "Payload": "{\"SessionId\":\"<correlationId>\",\"UserId\":\"stub-user-id\",\"UserName\":\"stub-user-name\",\"FilePath\":\"<storedFilePath>\",\"AdditionalInfo\":\"stub-info\",\"RequestDate\":\"<uploadedAtUtc in ISO-8601 UTC>\"}"
+}
+```
+
+`Payload` передаётся строкой JSON, как требует потребитель.
+
 ## Как запустить
 
 ```bash
@@ -47,6 +60,9 @@ dotnet test VTBL.Restrict.Loader.sln
 ## Кратко по истории
 
 ### Август 2026
+- 2026-08-04: формат RabbitMQ-сообщения приведён к контракту `Method` + строковый `Payload`; `UserId`, `UserName`, `AdditionalInfo` заполняются нейтральными заглушками.
+- 2026-08-04: production-код приведён к правилу “1 файл – 1 top-level тип” (разнесены интерфейс/DTO и запрос/результат/результат валидатора по отдельным `.cs`).
+- 2026-08-04: подключён NLog для текстового логирования; конфиг секции `NLog` вынесен в `UI/appsettings*.json` с выводом `operation/correlationId/listType` из `BeginScope`.
 - Проект переименован в **VTBL.Restrict.Loader**.
 - Из продукта убрана обработка ошибок парсинга.
 - Загрузка больше не пишет в БД (только шара + RabbitMQ); retry уведомления убран.

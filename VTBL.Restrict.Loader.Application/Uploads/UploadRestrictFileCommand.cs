@@ -246,22 +246,4 @@ namespace VTBL.Restrict.Loader.Application.Uploads
             };
         }
     }
-
-    public sealed class UploadRestrictFileRequest
-    {
-        public string ListTypeCode { get; set; }
-        public string OriginalFileName { get; set; }
-        public long ContentLength { get; set; }
-        public Stream Content { get; set; }
-        public string UploadedBy { get; set; }
-    }
-
-    public sealed class UploadRestrictFileResult
-    {
-        public bool Success { get; set; }
-        public Guid? CorrelationId { get; set; }
-        public string StoredFilePath { get; set; }
-        public string ErrorCode { get; set; }
-        public string Message { get; set; }
-    }
 }
