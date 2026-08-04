@@ -1,6 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using VTBL.Restrict.Loader.Application.Abstractions;
@@ -15,10 +17,14 @@ namespace VTBL.Restrict.Loader.Infrastructure.Messaging
     public sealed class RabbitMqUploadNotifier : IUploadNotifier
     {
         private readonly RabbitMqOptions _options;
+        private readonly ILogger _logger;
 
-        public RabbitMqUploadNotifier(IOptions<RabbitMqOptions> options)
+        public RabbitMqUploadNotifier(
+            IOptions<RabbitMqOptions> options,
+            ILogger<RabbitMqUploadNotifier> logger = null)
         {
             _options = options?.Value ?? new RabbitMqOptions();
+            _logger = logger ?? NullLogger<RabbitMqUploadNotifier>.Instance;
         }
 
         /// <inheritdoc />
@@ -39,34 +45,56 @@ namespace VTBL.Restrict.Loader.Infrastructure.Messaging
 
         private void PublishCore(AppUploadedMessage message, string routingKey)
         {
-            var factory = new ConnectionFactory
+            _logger.LogInformation(
+                "RabbitMQ publish started for exchange {Exchange} routing key {RoutingKey}",
+                _options.Exchange,
+                routingKey);
+
+            try
             {
-                HostName = _options.Host,
-                VirtualHost = _options.VirtualHost ?? "/",
-                UserName = _options.Username,
-                Password = _options.Password,
-                DispatchConsumersAsync = true
-            };
+                var factory = new ConnectionFactory
+                {
+                    HostName = _options.Host,
+                    VirtualHost = _options.VirtualHost ?? "/",
+                    UserName = _options.Username,
+                    Password = _options.Password,
+                    DispatchConsumersAsync = true
+                };
 
-            using var connection = factory.CreateConnection();
-            using var channel = connection.CreateModel();
+                using var connection = factory.CreateConnection();
+                using var channel = connection.CreateModel();
 
-            channel.ExchangeDeclare(
-                exchange: _options.Exchange,
-                type: ExchangeType.Topic,
-                durable: true,
-                autoDelete: false);
+                channel.ExchangeDeclare(
+                    exchange: _options.Exchange,
+                    type: ExchangeType.Topic,
+                    durable: true,
+                    autoDelete: false);
 
-            var payload = RestrictFileUploadedMessage.FromAppMessage(message).ToUtf8Json();
-            var properties = channel.CreateBasicProperties();
-            properties.Persistent = true;
-            properties.ContentType = "application/json";
+                var payload = RestrictFileUploadedMessage.FromAppMessage(message).ToUtf8Json();
+                var properties = channel.CreateBasicProperties();
+                properties.Persistent = true;
+                properties.ContentType = "application/json";
 
-            channel.BasicPublish(
-                exchange: _options.Exchange,
-                routingKey: routingKey,
-                basicProperties: properties,
-                body: payload);
+                channel.BasicPublish(
+                    exchange: _options.Exchange,
+                    routingKey: routingKey,
+                    basicProperties: properties,
+                    body: payload);
+
+                _logger.LogInformation(
+                    "RabbitMQ publish succeeded for exchange {Exchange} routing key {RoutingKey}",
+                    _options.Exchange,
+                    routingKey);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "RabbitMQ publish failed for exchange {Exchange} routing key {RoutingKey}",
+                    _options.Exchange,
+                    routingKey);
+                throw;
+            }
         }
     }
 }

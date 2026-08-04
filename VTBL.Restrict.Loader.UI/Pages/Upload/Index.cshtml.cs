@@ -5,7 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using VTBL.Restrict.Loader.Application.Abstractions;
+using VTBL.Restrict.Loader.Application.Observability;
 using VTBL.Restrict.Loader.Application.Uploads;
 using VTBL.Restrict.Loader.UI.Models;
 using VTBL.Restrict.Loader.UI.Uploads;
@@ -20,13 +23,16 @@ namespace VTBL.Restrict.Loader.UI.Pages.Upload
     {
         private readonly UploadRestrictFileCommand _uploadCommand;
         private readonly IListTypeReadStore _listTypeReadStore;
+        private readonly ILogger _logger;
 
         public IndexModel(
             UploadRestrictFileCommand uploadCommand,
-            IListTypeReadStore listTypeReadStore)
+            IListTypeReadStore listTypeReadStore,
+            ILogger<IndexModel> logger = null)
         {
             _uploadCommand = uploadCommand;
             _listTypeReadStore = listTypeReadStore;
+            _logger = logger ?? NullLogger<IndexModel>.Instance;
         }
 
         [BindProperty]
@@ -69,25 +75,40 @@ namespace VTBL.Restrict.Loader.UI.Pages.Upload
                 return Page();
             }
 
-            await using var stream = Input.File.OpenReadStream();
-            var request = new UploadRestrictFileRequest
+            using (_logger.BeginScope(new Dictionary<string, object>
             {
-                ListTypeCode = Input.ListTypeCode,
-                OriginalFileName = Input.File.FileName,
-                ContentLength = Input.File.Length,
-                Content = stream,
-                UploadedBy = User?.Identity?.Name
-            };
-
-            var result = await _uploadCommand.ExecuteAsync(request, cancellationToken);
-            ApplyCommandResult(result);
-
-            if (!result.Success)
+                [OperationLogScope.KeyOperation] = "upload-http",
+                ["requestId"] = HttpContext.TraceIdentifier,
+                [OperationLogScope.KeyListType] = Input.ListTypeCode ?? string.Empty
+            }))
             {
-                ModelState.AddModelError(string.Empty, ResultMessage);
+                _logger.LogInformation("Upload HTTP POST received");
+
+                await using var stream = Input.File.OpenReadStream();
+                var request = new UploadRestrictFileRequest
+                {
+                    ListTypeCode = Input.ListTypeCode,
+                    OriginalFileName = Input.File.FileName,
+                    ContentLength = Input.File.Length,
+                    Content = stream,
+                    UploadedBy = User?.Identity?.Name
+                };
+
+                var result = await _uploadCommand.ExecuteAsync(request, cancellationToken);
+                ApplyCommandResult(result);
+
+                if (!result.Success)
+                {
+                    ModelState.AddModelError(string.Empty, ResultMessage);
+                }
+
+                _logger.LogInformation(
+                    "Upload HTTP POST completed with success={Success} errorCode={ErrorCode}",
+                    result.Success,
+                    result.ErrorCode ?? string.Empty);
+
+                return Page();
             }
-
-            return Page();
         }
 
         private void ApplyClientValidationResult()

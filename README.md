@@ -24,7 +24,25 @@
 
 ## Логи
 
-При загрузке и публикации в лог пишутся `correlationId`, тип списка и код ошибки — чтобы потом можно было разобрать инцидент.
+Провайдер — **NLog** (`NLog.Web.AspNetCore`), конфиг в секции `NLog` файлов `VTBL.Restrict.Loader.UI/appsettings*.json`.
+
+| Окружение | Куда пишем |
+| --- | --- |
+| Production (базовый `appsettings.json`) | файл `{basedir}/logs/app-YYYY-MM-DD.log` |
+| Development | тот же файл **и** консоль |
+
+Ротация: ежедневно и/или при размере файла > 10 МБ; архивы в `logs/archive/` (до 30 файлов в prod, до 14 в Development). Каталог `logs/` в `.gitignore`.
+
+Поля scope (колонки layout, не дублируются в тексте сообщения):
+
+| Поле | Смысл |
+| --- | --- |
+| `operation` | `upload-http` / `upload` / `publish` |
+| `correlationId` | id загрузки (после генерации) |
+| `listType` | код типа списка |
+| `requestId` | `HttpContext.TraceIdentifier` на границе UI |
+
+Типичные сообщения: `Upload started/succeeded/failed`, `File share write …`, `RabbitMQ publish …`, `Upload HTTP POST …`. При ошибках в лог уходит exception. Искать инцидент: по `corr=` / `correlationId` в файле лога.
 
 ## Формат сообщения в RabbitMQ
 
@@ -60,6 +78,7 @@ dotnet test VTBL.Restrict.Loader.sln
 ## Кратко по истории
 
 ### Август 2026
+- 2026-08-04: логирование доведено до рабочего уровня: NLog file (+ console в Dev) с archive, exception в catch, логи шары/RabbitMQ/UI POST, поля `operation/correlationId/listType/requestId` через `BeginScope` без дублей в тексте сообщения.
 - 2026-08-04: формат RabbitMQ-сообщения приведён к контракту `Method` + строковый `Payload`; `UserId`, `UserName`, `AdditionalInfo` заполняются нейтральными заглушками.
 - 2026-08-04: production-код приведён к правилу “1 файл – 1 top-level тип” (разнесены интерфейс/DTO и запрос/результат/результат валидатора по отдельным `.cs`).
 - 2026-08-04: подключён NLog для текстового логирования; конфиг секции `NLog` вынесен в `UI/appsettings*.json` с выводом `operation/correlationId/listType` из `BeginScope`.

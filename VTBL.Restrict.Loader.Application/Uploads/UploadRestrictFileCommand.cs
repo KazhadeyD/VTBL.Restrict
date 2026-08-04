@@ -62,7 +62,7 @@ namespace VTBL.Restrict.Loader.Application.Uploads
 
             using (OperationLogScope.BeginUpload(_logger, request.ListTypeCode))
             {
-                _logger.LogInformation("Upload started for listType {ListType}", request.ListTypeCode);
+                _logger.LogInformation("Upload started");
 
                 var shell = UploadShellValidator.Validate(
                     request.ListTypeCode,
@@ -120,21 +120,23 @@ namespace VTBL.Restrict.Loader.Application.Uploads
                             targetPath,
                             cancellationToken).ConfigureAwait(false);
                     }
-                    catch (IOException)
+                    catch (IOException ex)
                     {
                         return LogFail(
                             UploadErrorCodes.Share,
                             "Не удалось сохранить файл на диск.",
                             correlationId,
-                            listType.Code);
+                            listType.Code,
+                            ex);
                     }
-                    catch (UnauthorizedAccessException)
+                    catch (UnauthorizedAccessException ex)
                     {
                         return LogFail(
                             UploadErrorCodes.Share,
                             "Нет доступа к каталогу хранения файлов.",
                             correlationId,
-                            listType.Code);
+                            listType.Code,
+                            ex);
                     }
 
                     var notifyMessage = new AppNotifyMessage
@@ -155,27 +157,17 @@ namespace VTBL.Restrict.Loader.Application.Uploads
                     {
                         using (OperationLogScope.BeginPublish(_logger, correlationId, listType.Code))
                         {
-                            _logger.LogInformation(
-                                "Upload publish started correlationId={CorrelationId} listType={ListType}",
-                                correlationId,
-                                listType.Code);
+                            _logger.LogInformation("Upload publish started");
 
                             await _uploadNotifier.PublishUploadedAsync(notifyMessage, routingKey, cancellationToken)
                                 .ConfigureAwait(false);
 
-                            _logger.LogInformation(
-                                "Upload publish succeeded correlationId={CorrelationId} listType={ListType}",
-                                correlationId,
-                                listType.Code);
+                            _logger.LogInformation("Upload publish succeeded");
                         }
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        _logger.LogWarning(
-                            "Upload publish failed correlationId={CorrelationId} listType={ListType} errorCode={ErrorCode}",
-                            correlationId,
-                            listType.Code,
-                            UploadErrorCodes.Rmq);
+                        _logger.LogWarning(ex, "Upload publish failed with {ErrorCode}", UploadErrorCodes.Rmq);
 
                         return PartialFail(
                             UploadErrorCodes.Rmq,
@@ -184,10 +176,7 @@ namespace VTBL.Restrict.Loader.Application.Uploads
                             storedPath);
                     }
 
-                    _logger.LogInformation(
-                        "Upload succeeded correlationId={CorrelationId} listType={ListType}",
-                        correlationId,
-                        listType.Code);
+                    _logger.LogInformation("Upload succeeded");
 
                     return new UploadRestrictFileResult
                     {
@@ -205,13 +194,21 @@ namespace VTBL.Restrict.Loader.Application.Uploads
             string errorCode,
             string message,
             Guid? correlationId,
-            string listType)
+            string listType,
+            Exception exception = null)
         {
-            _logger.LogWarning(
-                "Upload failed listType={ListType} correlationId={CorrelationId} errorCode={ErrorCode}",
-                listType,
-                correlationId,
-                errorCode);
+            using (OperationLogScope.BeginUpload(_logger, listType, correlationId))
+            {
+                if (exception != null)
+                {
+                    _logger.LogWarning(exception, "Upload failed with {ErrorCode}", errorCode);
+                }
+                else
+                {
+                    _logger.LogWarning("Upload failed with {ErrorCode}", errorCode);
+                }
+            }
+
             return Fail(errorCode, message);
         }
 

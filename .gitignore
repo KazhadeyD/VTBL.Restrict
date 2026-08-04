@@ -49,4 +49,9 @@ appsettings.*.local.json
 # Local smoke uploads
 .smoke-data/
 
+# Runtime logs (NLog)
+**/logs/
+nlog-internal.log
+**/nlog-internal.log
+
 docs/implementation/

@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using VTBL.Restrict.Loader.Application.Abstractions;
 
 namespace VTBL.Restrict.Loader.Infrastructure.Files
@@ -13,6 +15,12 @@ namespace VTBL.Restrict.Loader.Infrastructure.Files
     public sealed class UncFileShareStore : IFileShareStore
     {
         private const int BufferSize = 81920;
+        private readonly ILogger _logger;
+
+        public UncFileShareStore(ILogger<UncFileShareStore> logger = null)
+        {
+            _logger = logger ?? NullLogger<UncFileShareStore>.Instance;
+        }
 
         /// <inheritdoc />
         public async Task<string> WriteAsIsAsync(
@@ -29,6 +37,8 @@ namespace VTBL.Restrict.Loader.Infrastructure.Files
             {
                 throw new ArgumentException("Target path is required.", nameof(targetFullPath));
             }
+
+            _logger.LogInformation("File share write started for {TargetPath}", targetFullPath);
 
             var directory = Path.GetDirectoryName(targetFullPath);
             if (!string.IsNullOrEmpty(directory))
@@ -57,11 +67,13 @@ namespace VTBL.Restrict.Loader.Infrastructure.Files
                 }
 
                 File.Move(tempPath, targetFullPath);
+                _logger.LogInformation("File share write succeeded for {TargetPath}", targetFullPath);
                 return targetFullPath;
             }
-            catch
+            catch (Exception ex)
             {
                 TryDeleteFile(tempPath);
+                _logger.LogError(ex, "File share write failed for {TargetPath}", targetFullPath);
                 throw;
             }
         }
