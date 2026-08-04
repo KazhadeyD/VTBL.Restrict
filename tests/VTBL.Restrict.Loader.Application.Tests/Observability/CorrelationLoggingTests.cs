@@ -24,7 +24,6 @@ namespace VTBL.Restrict.Loader.Application.Tests.Observability
                 new InMemoryListTypeReadStore(harness.RemoteRoot),
                 MsOptions.Create(new RestrictStorageOptions
                 {
-                    RemoteRoot = harness.RemoteRoot,
                     AllowedExtensions = new[] { ".xlsx", ".xls", ".csv" },
                     MaxFileSizeBytes = 52_428_800L
                 }),

@@ -1,13 +1,12 @@
 namespace VTBL.Restrict.Loader.Application.Options
 {
     /// <summary>
-    /// Настройки оболочки загрузки (расширения, лимит размера, RemoteRoot).
+    /// Правила оболочки файла при загрузке (расширения и лимит размера).
+    /// Каталог выкладки задаётся в ListTypes[].remoteRoot, не здесь.
     /// </summary>
     public sealed class RestrictStorageOptions
     {
         public const string SectionName = "RestrictStorage";
-
-        public string RemoteRoot { get; set; }
 
         public string[] AllowedExtensions { get; set; } =
         {

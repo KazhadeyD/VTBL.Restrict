@@ -78,6 +78,7 @@ dotnet test VTBL.Restrict.Loader.sln
 ## Кратко по истории
 
 ### Август 2026
+- 2026-08-04: из `RestrictStorage` / `RestrictStorageOptions` убран мёртвый `RemoteRoot`; каталог выкладки только в `ListTypes[].remoteRoot`, секция `RestrictStorage` — расширения и лимит размера.
 - 2026-08-04: логирование доведено до рабочего уровня: NLog file (+ console в Dev) с archive, exception в catch, логи шары/RabbitMQ/UI POST, поля `operation/correlationId/listType/requestId` через `BeginScope` без дублей в тексте сообщения.
 - 2026-08-04: формат RabbitMQ-сообщения приведён к контракту `Method` + строковый `Payload`; `UserId`, `UserName`, `AdditionalInfo` заполняются нейтральными заглушками.
 - 2026-08-04: production-код приведён к правилу “1 файл – 1 top-level тип” (разнесены интерфейс/DTO и запрос/результат/результат валидатора по отдельным `.cs`).

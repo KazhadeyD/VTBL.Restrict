@@ -20,11 +20,10 @@ namespace VTBL.Restrict.Loader.Application.Tests.Uploads
         [Fact]
         public async Task ExecuteAsync_HappyPath_CallOrder_WriteThenPublish()
         {
-            var remoteRoot = CreateTempRoot();
             var tracker = new OrderSequenceTracker();
             var command = new UploadRestrictFileCommand(
                 new InMemoryListTypeReadStore(),
-                MsOptions.Create(CreateOptions(remoteRoot)),
+                MsOptions.Create(CreateOptions()),
                 new UploadPathBuilder(),
                 new OrderTrackingFileShareStore(new UncFileShareStore(), tracker),
                 new TrackingUploadNotifierWithOrder(tracker));
@@ -72,11 +71,10 @@ namespace VTBL.Restrict.Loader.Application.Tests.Uploads
         [Fact]
         public async Task ExecuteAsync_ShareFail_NoPublish()
         {
-            var remoteRoot = CreateTempRoot();
             var notifier = new TrackingUploadNotifier();
             var command = new UploadRestrictFileCommand(
                 new InMemoryListTypeReadStore(),
-                MsOptions.Create(CreateOptions(remoteRoot)),
+                MsOptions.Create(CreateOptions()),
                 new UploadPathBuilder(),
                 new FailingFileShareStoreForUnit(),
                 notifier);
@@ -102,21 +100,13 @@ namespace VTBL.Restrict.Loader.Application.Tests.Uploads
             };
         }
 
-        private static RestrictStorageOptions CreateOptions(string remoteRoot)
+        private static RestrictStorageOptions CreateOptions()
         {
             return new RestrictStorageOptions
             {
-                RemoteRoot = remoteRoot,
                 AllowedExtensions = new[] { ".xlsx", ".xls", ".csv" },
                 MaxFileSizeBytes = 52_428_800L
             };
-        }
-
-        private static string CreateTempRoot()
-        {
-            var path = Path.Combine(Path.GetTempPath(), "VTBL.Restrict.Loader.Tests", System.Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(path);
-            return path;
         }
 
         private sealed class FailingFileShareStoreForUnit : IFileShareStore

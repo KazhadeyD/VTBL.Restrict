@@ -31,7 +31,6 @@ namespace VTBL.Restrict.Loader.Application.Tests.Support
 
             var options = MsOptions.Create(new RestrictStorageOptions
             {
-                RemoteRoot = remoteRoot,
                 AllowedExtensions = new[] { ".xlsx", ".xls", ".csv" },
                 MaxFileSizeBytes = 52_428_800L
             });

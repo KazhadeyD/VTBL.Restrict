@@ -43,7 +43,6 @@ namespace VTBL.Restrict.Loader.Tests.Infrastructure
                 config.AddInMemoryCollection(new Dictionary<string, string>
                 {
                     ["ConnectionStrings:RestrictDb"] = string.Empty,
-                    ["RestrictStorage:RemoteRoot"] = TestRemoteRoot,
                     ["RabbitMq:Host"] = string.Empty,
                     ["ListTypes:0:remoteRoot"] = Path.Combine(TestRemoteRoot, "mvk"),
                     ["ListTypes:1:remoteRoot"] = Path.Combine(TestRemoteRoot, "terrorists"),
