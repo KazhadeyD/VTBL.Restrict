@@ -1,16 +1,14 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using VTBL.Restrict.Loader.Application.Abstractions;
 using VTBL.Restrict.Loader.Application.Options;
 using VTBL.Restrict.Loader.Application.Uploads;
-using VTBL.Restrict.Loader.Context;
-using VTBL.Restrict.Loader.Context.Stores;
 using VTBL.Restrict.Loader.Infrastructure.Files;
+using VTBL.Restrict.Loader.Infrastructure;
 using VTBL.Restrict.Loader.Infrastructure.Messaging;
 using VTBL.Restrict.Loader.Infrastructure.Options;
 using VTBL.Restrict.Loader.Infrastructure.Stub;
@@ -40,17 +38,8 @@ namespace VTBL.Restrict.Loader.UI
             services.Configure<RestrictStorageOptions>(Configuration.GetSection(RestrictStorageOptions.SectionName));
             services.Configure<RabbitMqOptions>(Configuration.GetSection(RabbitMqOptions.SectionName));
 
-            var connectionString = Configuration.GetConnectionString("RestrictDb");
-            if (!string.IsNullOrWhiteSpace(connectionString))
-            {
-                services.AddDbContext<RestrictDbContext>(options =>
-                    options.UseSqlServer(connectionString));
-                services.AddScoped<IListTypeReadStore, EfListTypeReadStore>();
-            }
-            else
-            {
-                services.AddSingleton<IListTypeReadStore>(_ => new InMemoryListTypeReadStore());
-            }
+            // ListTypes берем из конфигурации, БД игнорируем.
+            services.AddSingleton<IListTypeReadStore, AppSettingsListTypeReadStore>();
 
             services.AddSingleton<IUploadPathBuilder, UploadPathBuilder>();
             services.AddSingleton<IFileShareStore, UncFileShareStore>();

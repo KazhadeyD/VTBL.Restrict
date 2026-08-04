@@ -37,7 +37,7 @@ namespace VTBL.Restrict.Loader.Application.Tests.Support
             });
 
             var command = new UploadRestrictFileCommand(
-                new InMemoryListTypeReadStore(),
+                new InMemoryListTypeReadStore(remoteRoot),
                 options,
                 new UploadPathBuilder(),
                 new UncFileShareStore(),

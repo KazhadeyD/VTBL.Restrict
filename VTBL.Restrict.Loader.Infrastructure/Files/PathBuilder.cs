@@ -10,23 +10,16 @@ namespace VTBL.Restrict.Loader.Infrastructure.Files
     public static class PathBuilder
     {
         /// <summary>
-        /// {RemoteRoot}\{FolderSegment}\{yyyy}\{MM}\{dd}\{correlationIdN}_{sanitizedOriginalName}
+        /// {RemoteRoot}\{correlationIdN}_{sanitizedOriginalName}
         /// </summary>
         public static string BuildTargetPath(
             string remoteRoot,
-            string folderSegment,
-            DateTime utcNow,
             Guid correlationId,
             string originalFileName)
         {
             if (string.IsNullOrWhiteSpace(remoteRoot))
             {
                 throw new ArgumentException("RemoteRoot is required.", nameof(remoteRoot));
-            }
-
-            if (string.IsNullOrWhiteSpace(folderSegment))
-            {
-                throw new ArgumentException("FolderSegment is required.", nameof(folderSegment));
             }
 
             var sanitized = FileNameSanitizer.Sanitize(originalFileName);
@@ -37,14 +30,9 @@ namespace VTBL.Restrict.Loader.Infrastructure.Files
 
             var fileName = correlationId.ToString("N") + "_" + sanitized;
             var root = remoteRoot.TrimEnd('\\', '/');
-            var segment = folderSegment.Trim('\\', '/');
 
             return Path.Combine(
                 root,
-                segment,
-                utcNow.ToString("yyyy"),
-                utcNow.ToString("MM"),
-                utcNow.ToString("dd"),
                 fileName);
         }
     }

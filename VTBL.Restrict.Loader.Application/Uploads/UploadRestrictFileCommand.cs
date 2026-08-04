@@ -77,16 +77,16 @@ namespace VTBL.Restrict.Loader.Application.Uploads
                 }
 
                 var listType = await _listTypeReadStore.GetByCodeAsync(request.ListTypeCode, cancellationToken);
-                if (listType == null || !listType.IsActive)
+                if (listType == null)
                 {
                     return LogFail(
                         UploadErrorCodes.Validation,
-                        "Тип списка не найден или неактивен.",
+                        "Тип списка не найден.",
                         null,
                         request.ListTypeCode);
                 }
 
-                if (string.IsNullOrWhiteSpace(_storageOptions.RemoteRoot))
+                if (string.IsNullOrWhiteSpace(listType.RemoteRoot))
                 {
                     return LogFail(
                         UploadErrorCodes.Share,
@@ -105,11 +105,8 @@ namespace VTBL.Restrict.Loader.Application.Uploads
                 }
 
                 var correlationId = Guid.NewGuid();
-                var utcNow = DateTime.UtcNow;
                 var targetPath = _pathBuilder.BuildTargetPath(
-                    _storageOptions.RemoteRoot,
-                    listType.FolderSegment,
-                    utcNow,
+                    listType.RemoteRoot,
                     correlationId,
                     request.OriginalFileName);
 
@@ -148,11 +145,11 @@ namespace VTBL.Restrict.Loader.Application.Uploads
                         ListType = listType.Code,
                         FilePath = storedPath,
                         OriginalFileName = request.OriginalFileName,
-                        UploadedAtUtc = utcNow,
+                        UploadedAtUtc = DateTime.UtcNow,
                         UploadedBy = request.UploadedBy
                     };
 
-                    var routingKey = "restrict.upload." + listType.RoutingKeySuffix;
+                    var routingKey = "restrict.upload." + listType.Code?.Trim().ToLowerInvariant();
 
                     try
                     {

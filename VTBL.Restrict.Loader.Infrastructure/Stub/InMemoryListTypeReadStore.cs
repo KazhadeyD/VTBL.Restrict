@@ -9,17 +9,26 @@ using VTBL.Restrict.Loader.Domain.ListTypes;
 namespace VTBL.Restrict.Loader.Infrastructure.Stub
 {
     /// <summary>
-    /// In-memory ListType store для dev/test без SQL (seed MVP + контроль IsActive).
+    /// In-memory ListType store для dev/test без SQL.
     /// </summary>
     public sealed class InMemoryListTypeReadStore : IListTypeReadStore
     {
         private readonly List<ListTypeInfo> _items;
 
         /// <summary>
-        /// Seed по умолчанию (MVK/TERRORISTS/NFA active, OTHER inactive).
+        /// Seed по умолчанию.
         /// </summary>
         public InMemoryListTypeReadStore()
-            : this(CreateDefaultSeed())
+            : this(CreateDefaultSeed(CreateDefaultRemoteRoot()))
+        {
+        }
+
+        /// <summary>
+        /// Seed по умолчанию, но с заданным RemoteRoot для каждого listType.
+        /// Удобно для unit/e2e тестов, чтобы ожидаемые пути совпадали.
+        /// </summary>
+        public InMemoryListTypeReadStore(string remoteRoot)
+            : this(CreateDefaultSeed(remoteRoot))
         {
         }
 
@@ -35,7 +44,6 @@ namespace VTBL.Restrict.Loader.Infrastructure.Stub
         public Task<IReadOnlyList<ListTypeInfo>> GetActiveAsync(CancellationToken cancellationToken)
         {
             IReadOnlyList<ListTypeInfo> active = _items
-                .Where(x => x.IsActive)
                 .Select(Clone)
                 .OrderBy(x => x.Name)
                 .ToList();
@@ -45,48 +53,44 @@ namespace VTBL.Restrict.Loader.Infrastructure.Stub
         public Task<ListTypeInfo> GetByCodeAsync(string code, CancellationToken cancellationToken)
         {
             var found = _items.FirstOrDefault(x =>
-                x.IsActive &&
                 string.Equals(x.Code, code, StringComparison.OrdinalIgnoreCase));
             return Task.FromResult(found == null ? null : Clone(found));
         }
 
-        private static IEnumerable<ListTypeInfo> CreateDefaultSeed()
+        private static string CreateDefaultRemoteRoot()
+        {
+            // Даем non-empty значение, чтобы PathBuilder не падал при использовании дефолтного seed в тестах.
+            return System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(),
+                "VTBL.Restrict.Loader",
+                "InMemoryRemoteRoot");
+        }
+
+        private static IEnumerable<ListTypeInfo> CreateDefaultSeed(string remoteRoot)
         {
             yield return new ListTypeInfo
             {
-                ListTypeId = 1,
                 Code = "MVK",
                 Name = "МВК",
-                FolderSegment = "mvk",
-                RoutingKeySuffix = "mvk",
-                IsActive = true
+                RemoteRoot = remoteRoot
             };
             yield return new ListTypeInfo
             {
-                ListTypeId = 2,
                 Code = "TERRORISTS",
                 Name = "Террористы",
-                FolderSegment = "terrorists",
-                RoutingKeySuffix = "terrorists",
-                IsActive = true
+                RemoteRoot = remoteRoot
             };
             yield return new ListTypeInfo
             {
-                ListTypeId = 3,
                 Code = "NFA",
                 Name = "Нелегальная финансовая деятельность",
-                FolderSegment = "nfa",
-                RoutingKeySuffix = "nfa",
-                IsActive = true
+                RemoteRoot = remoteRoot
             };
             yield return new ListTypeInfo
             {
-                ListTypeId = 4,
                 Code = "OTHER",
                 Name = "Прочее",
-                FolderSegment = "other",
-                RoutingKeySuffix = "other",
-                IsActive = false
+                RemoteRoot = remoteRoot
             };
         }
 
@@ -94,12 +98,9 @@ namespace VTBL.Restrict.Loader.Infrastructure.Stub
         {
             return new ListTypeInfo
             {
-                ListTypeId = source.ListTypeId,
                 Code = source.Code,
                 Name = source.Name,
-                FolderSegment = source.FolderSegment,
-                RoutingKeySuffix = source.RoutingKeySuffix,
-                IsActive = source.IsActive
+                RemoteRoot = source.RemoteRoot
             };
         }
     }

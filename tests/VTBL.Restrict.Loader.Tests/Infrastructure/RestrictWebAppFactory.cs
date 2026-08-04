@@ -51,7 +51,7 @@ namespace VTBL.Restrict.Loader.Tests.Infrastructure
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<IListTypeReadStore>();
-                services.AddSingleton<IListTypeReadStore>(_ => new InMemoryListTypeReadStore());
+                services.AddSingleton<IListTypeReadStore>(_ => new InMemoryListTypeReadStore(TestRemoteRoot));
 
                 services.RemoveAll<IUploadNotifier>();
                 services.AddSingleton<IUploadNotifier>(TrackingNotifier);

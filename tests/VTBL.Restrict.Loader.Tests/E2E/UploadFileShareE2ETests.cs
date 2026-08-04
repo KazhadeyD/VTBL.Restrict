@@ -56,7 +56,7 @@ namespace VTBL.Restrict.Loader.Tests.E2E
             Assert.True(correlationMatch.Success, "correlationId not found in response");
             var correlationId = Guid.Parse(correlationMatch.Groups[1].Value);
 
-            var found = FindUploadedFile(_remoteRoot, "mvk", correlationId, "list.xlsx");
+            var found = FindUploadedFile(_remoteRoot, correlationId, "list.xlsx");
             Assert.NotNull(found);
             Assert.Equal(payload, await File.ReadAllBytesAsync(found));
             Assert.False(File.Exists(found + ".tmp"));
@@ -107,7 +107,7 @@ namespace VTBL.Restrict.Loader.Tests.E2E
             }
         }
 
-        private static string FindUploadedFile(string remoteRoot, string segment, Guid correlationId, string originalName)
+        private static string FindUploadedFile(string remoteRoot, Guid correlationId, string originalName)
         {
             if (!Directory.Exists(remoteRoot))
             {
@@ -117,11 +117,7 @@ namespace VTBL.Restrict.Loader.Tests.E2E
             var suffix = correlationId.ToString("N") + "_" + originalName;
             foreach (var file in Directory.GetFiles(remoteRoot, "*" + suffix, SearchOption.AllDirectories))
             {
-                if (file.Contains(Path.DirectorySeparatorChar + segment + Path.DirectorySeparatorChar) ||
-                    file.Contains(Path.AltDirectorySeparatorChar + segment + Path.AltDirectorySeparatorChar))
-                {
-                    return file;
-                }
+                return file;
             }
 
             return null;

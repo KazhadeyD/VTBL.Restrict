@@ -21,20 +21,19 @@ namespace VTBL.Restrict.Loader.Application.Tests.ListTypes
             Assert.Contains(active, x => x.Code == "MVK");
             Assert.Contains(active, x => x.Code == "TERRORISTS");
             Assert.Contains(active, x => x.Code == "NFA");
-            Assert.DoesNotContain(active, x => x.Code == "OTHER");
-            Assert.All(active, x => Assert.True(x.IsActive));
+            Assert.Contains(active, x => x.Code == "OTHER");
         }
 
         [Fact]
-        public async Task GetByCodeAsync_IgnoresInactive()
+        public async Task GetByCodeAsync_ReturnsKnownItem()
         {
             var store = new InMemoryListTypeReadStore();
             var other = await store.GetByCodeAsync("OTHER", CancellationToken.None);
-            Assert.Null(other);
+            Assert.NotNull(other);
 
             var mvk = await store.GetByCodeAsync("MVK", CancellationToken.None);
             Assert.NotNull(mvk);
-            Assert.Equal("mvk", mvk.FolderSegment);
+            Assert.False(string.IsNullOrWhiteSpace(mvk.RemoteRoot));
         }
     }
 }

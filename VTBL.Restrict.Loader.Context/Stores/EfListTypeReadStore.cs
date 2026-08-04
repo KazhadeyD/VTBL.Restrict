@@ -46,12 +46,9 @@ namespace VTBL.Restrict.Loader.Context.Stores
         {
             return new ListTypeInfo
             {
-                ListTypeId = x.ListTypeId,
                 Code = x.Code,
                 Name = x.Name,
-                FolderSegment = x.FolderSegment,
-                RoutingKeySuffix = x.RoutingKeySuffix,
-                IsActive = x.IsActive
+                RemoteRoot = null
             };
         }
     }

@@ -5,11 +5,11 @@ namespace VTBL.Restrict.Loader.Domain.ListTypes
     /// </summary>
     public sealed class ListTypeInfo
     {
-        public int ListTypeId { get; set; }
         public string Code { get; set; }
         public string Name { get; set; }
-        public string FolderSegment { get; set; }
-        public string RoutingKeySuffix { get; set; }
-        public bool IsActive { get; set; }
+        /// <summary>
+        /// Каталог (RemoteRoot), куда нужно выкладывать файл для данного типа списка.
+        /// </summary>
+        public string RemoteRoot { get; set; }
     }
 }

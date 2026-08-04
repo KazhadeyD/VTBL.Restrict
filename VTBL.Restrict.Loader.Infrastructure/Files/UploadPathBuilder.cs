@@ -11,15 +11,11 @@ namespace VTBL.Restrict.Loader.Infrastructure.Files
         /// <inheritdoc />
         public string BuildTargetPath(
             string remoteRoot,
-            string folderSegment,
-            DateTime utcNow,
             Guid correlationId,
             string originalFileName)
         {
             return PathBuilder.BuildTargetPath(
                 remoteRoot,
-                folderSegment,
-                utcNow,
                 correlationId,
                 originalFileName);
         }

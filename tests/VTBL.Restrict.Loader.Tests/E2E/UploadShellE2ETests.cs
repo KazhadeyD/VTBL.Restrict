@@ -15,7 +15,7 @@ namespace VTBL.Restrict.Loader.Tests.E2E
 {
     /// <summary>
     /// Страница загрузки и валидация без вызова файловой шары.
-    /// ListType через InMemory seed (MVK/TERRORISTS/NFA) при пустом RestrictDb.
+    /// ListType через InMemory seed при пустом RestrictDb.
     /// </summary>
     public sealed class UploadShellE2ETests : IClassFixture<RestrictWebAppFactory>
     {
@@ -37,10 +37,11 @@ namespace VTBL.Restrict.Loader.Tests.E2E
             Assert.Contains("value=\"MVK\"", decoded);
             Assert.Contains("value=\"TERRORISTS\"", decoded);
             Assert.Contains("value=\"NFA\"", decoded);
+            Assert.Contains("value=\"OTHER\"", decoded);
             Assert.Contains("МВК", decoded);
             Assert.Contains("Террористы", decoded);
             Assert.Contains("Нелегальная финансовая деятельность", decoded);
-            Assert.DoesNotContain("value=\"OTHER\"", decoded);
+            Assert.Contains("Прочее", decoded);
         }
 
         [Fact]

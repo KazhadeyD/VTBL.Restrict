@@ -8,12 +8,10 @@ namespace VTBL.Restrict.Loader.Application.Abstractions
     public interface IUploadPathBuilder
     {
         /// <summary>
-        /// {RemoteRoot}\{FolderSegment}\{yyyy}\{MM}\{dd}\{correlationId}_{sanitizedOriginalName}
+        /// {RemoteRoot}\{correlationId}_{sanitizedOriginalName}
         /// </summary>
         string BuildTargetPath(
             string remoteRoot,
-            string folderSegment,
-            DateTime utcNow,
             Guid correlationId,
             string originalFileName);
     }

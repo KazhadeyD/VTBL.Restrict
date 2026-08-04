@@ -21,7 +21,7 @@ namespace VTBL.Restrict.Loader.Application.Tests.Observability
             var logger = new CollectingLogger<UploadRestrictFileCommand>(provider);
             var harness = UploadCommandTestSupport.CreateHarness();
             var command = new UploadRestrictFileCommand(
-                new InMemoryListTypeReadStore(),
+                new InMemoryListTypeReadStore(harness.RemoteRoot),
                 MsOptions.Create(new RestrictStorageOptions
                 {
                     RemoteRoot = harness.RemoteRoot,
