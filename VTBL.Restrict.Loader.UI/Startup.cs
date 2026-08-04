@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using VTBL.Restrict.Loader.Application.Abstractions;
 using VTBL.Restrict.Loader.Application.Options;
 using VTBL.Restrict.Loader.Application.Uploads;
@@ -12,6 +13,7 @@ using VTBL.Restrict.Loader.Infrastructure;
 using VTBL.Restrict.Loader.Infrastructure.Messaging;
 using VTBL.Restrict.Loader.Infrastructure.Options;
 using VTBL.Restrict.Loader.Infrastructure.Stub;
+using VTBL.Restrict.Loader.UI.Configuration;
 
 namespace VTBL.Restrict.Loader.UI
 {
@@ -39,7 +41,12 @@ namespace VTBL.Restrict.Loader.UI
             services.Configure<RabbitMqOptions>(Configuration.GetSection(RabbitMqOptions.SectionName));
 
             // ListTypes берем из конфигурации, БД игнорируем.
-            services.AddSingleton<IListTypeReadStore, AppSettingsListTypeReadStore>();
+            services.AddOptions<ListTypesOptions>();
+            services.AddSingleton<IConfigureOptions<ListTypesOptions>, ListTypesOptionsSetup>();
+            services.AddSingleton<IValidateOptions<ListTypesOptions>, ListTypesOptionsValidator>();
+            services.AddHostedService<ListTypesOptionsValidationHostedService>();
+            services.AddSingleton<IListTypeReadStore>(sp =>
+                new AppSettingsListTypeReadStore(sp.GetRequiredService<IOptions<ListTypesOptions>>().Value.Items));
 
             services.AddSingleton<IUploadPathBuilder, UploadPathBuilder>();
             services.AddSingleton<IFileShareStore, UncFileShareStore>();

@@ -65,6 +65,8 @@ dotnet test VTBL.Restrict.Loader.sln
 - 2026-08-04: подключён NLog для текстового логирования; конфиг секции `NLog` вынесен в `UI/appsettings*.json` с выводом `operation/correlationId/listType` из `BeginScope`.
 - 2026-08-04: `ListTypes` переведён на чтение из `UI/appsettings.json` (ключ `ListTypes` как массив); минимальный контракт типа списка сжат до `remoteRoot`, `code`, `name`, а `remoteRoot` теперь считается полным корнем выкладки для конкретного типа.
 - 2026-08-04: `BuildTargetPath` упрощён до формата `{RemoteRoot}\{correlationIdN}_{sanitizedOriginalName}` (без вложенности по дате).
+- 2026-08-04: архитектура усилена под `net5`: убрана прямая зависимость `UI -> Context`, `AppSettingsListTypeReadStore` отвязан от `IConfiguration`, добавлена fail-fast валидация `ListTypes` на старте (обязательность `remoteRoot/code/name`, уникальность `code`, допустимый формат `code`).
+- 2026-08-04: fail-fast валидация `ListTypes` переведена на альтернативный вариант через `Options` + `IValidateOptions` + `IHostedService` (валидация на старте без раздувания `Startup`).
 - Проект переименован в **VTBL.Restrict.Loader**.
 - Из продукта убрана обработка ошибок парсинга.
 - Загрузка больше не пишет в БД (только шара + RabbitMQ); retry уведомления убран.

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using VTBL.Restrict.Loader.Application.Abstractions;
 using VTBL.Restrict.Loader.Domain.ListTypes;
 
@@ -17,10 +16,11 @@ namespace VTBL.Restrict.Loader.Infrastructure
     {
         private readonly IReadOnlyList<ListTypeInfo> _items;
 
-        public AppSettingsListTypeReadStore(IConfiguration configuration)
+        public AppSettingsListTypeReadStore(IEnumerable<ListTypeInfo> items)
         {
-            var items = configuration.GetSection("ListTypes").Get<ListTypeInfo[]>() ?? Array.Empty<ListTypeInfo>();
-            _items = items.Select(Clone).ToList();
+            _items = (items ?? Array.Empty<ListTypeInfo>())
+                .Select(Clone)
+                .ToList();
         }
 
         public Task<IReadOnlyList<ListTypeInfo>> GetActiveAsync(CancellationToken cancellationToken)

@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VTBL.Restrict.Loader.Application\VTBL.Restrict.Loader.Application.csproj" />
-    <ProjectReference Include="..\VTBL.Restrict.Loader.Context\VTBL.Restrict.Loader.Context.csproj" />
     <ProjectReference Include="..\VTBL.Restrict.Loader.Infrastructure\VTBL.Restrict.Loader.Infrastructure.csproj" />
   </ItemGroup>
 

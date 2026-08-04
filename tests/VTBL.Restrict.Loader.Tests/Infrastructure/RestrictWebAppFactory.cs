@@ -44,7 +44,11 @@ namespace VTBL.Restrict.Loader.Tests.Infrastructure
                 {
                     ["ConnectionStrings:RestrictDb"] = string.Empty,
                     ["RestrictStorage:RemoteRoot"] = TestRemoteRoot,
-                    ["RabbitMq:Host"] = string.Empty
+                    ["RabbitMq:Host"] = string.Empty,
+                    ["ListTypes:0:remoteRoot"] = Path.Combine(TestRemoteRoot, "mvk"),
+                    ["ListTypes:1:remoteRoot"] = Path.Combine(TestRemoteRoot, "terrorists"),
+                    ["ListTypes:2:remoteRoot"] = Path.Combine(TestRemoteRoot, "nfa"),
+                    ["ListTypes:3:remoteRoot"] = Path.Combine(TestRemoteRoot, "other")
                 });
             });
 
