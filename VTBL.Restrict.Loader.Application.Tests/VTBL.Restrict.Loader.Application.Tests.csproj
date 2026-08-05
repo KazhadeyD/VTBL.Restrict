@@ -3,10 +3,8 @@
     <TargetFramework>net5.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <Nullable>disable</Nullable>
-    <RootNamespace>VTBL.Restrict.Loader.Tests</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="5.0.17" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
@@ -15,8 +13,8 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\VTBL.Restrict.Loader.UI\VTBL.Restrict.Loader.UI.csproj" />
-    <ProjectReference Include="..\..\VTBL.Restrict.Loader.Application\VTBL.Restrict.Loader.Application.csproj" />
-    <ProjectReference Include="..\..\VTBL.Restrict.Loader.Infrastructure\VTBL.Restrict.Loader.Infrastructure.csproj" />
+    <ProjectReference Include="..\VTBL.Restrict.Loader.Application\VTBL.Restrict.Loader.Application.csproj" />
+    <ProjectReference Include="..\VTBL.Restrict.Loader.Infrastructure\VTBL.Restrict.Loader.Infrastructure.csproj" />
+    <ProjectReference Include="..\VTBL.Restrict.Loader.Domain\VTBL.Restrict.Loader.Domain.csproj" />
   </ItemGroup>
 </Project>

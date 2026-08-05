@@ -13,8 +13,8 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\VTBL.Restrict.Loader.Application\VTBL.Restrict.Loader.Application.csproj" />
-    <ProjectReference Include="..\..\VTBL.Restrict.Loader.Infrastructure\VTBL.Restrict.Loader.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\VTBL.Restrict.Loader.Domain\VTBL.Restrict.Loader.Domain.csproj" />
+    <ProjectReference Include="..\VTBL.Restrict.Loader.UI\VTBL.Restrict.Loader.UI.csproj" />
+    <ProjectReference Include="..\VTBL.Restrict.Loader.Application\VTBL.Restrict.Loader.Application.csproj" />
+    <ProjectReference Include="..\VTBL.Restrict.Loader.Infrastructure\VTBL.Restrict.Loader.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

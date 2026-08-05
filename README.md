@@ -16,7 +16,7 @@
 | `VTBL.Restrict.Loader.Domain` | Общие правила и справочные типы |
 | `VTBL.Restrict.Loader.Context` | Работа с SQL Server через EF Core (чтение типов) |
 | `VTBL.Restrict.Loader.Infrastructure` | Запись на шару, RabbitMQ, заглушки для локальной разработки |
-| `tests/…` | Автотесты |
+| `VTBL.Restrict.Loader.*.Tests` | Автотесты (рядом с проектами в корне solution) |
 | `docker-compose.yml` | Локальный SQL Server (порт **1434**) |
 | `docs/` | Описание продукта, БД, запуска и интеграций |
 
@@ -78,6 +78,8 @@ dotnet test VTBL.Restrict.Loader.sln
 ## Кратко по истории
 
 ### Август 2026
+- 2026-08-05: тестовые проекты вынесены из папки `tests/` в корень solution (`VTBL.Restrict.Loader.Application.Tests`, `VTBL.Restrict.Loader.UI.Tests`, `VTBL.Restrict.Loader.Tests`).
+- 2026-08-05: убрана дублирующая прослойка `Infrastructure/Messaging/RestrictFileUploadedMessage`; сборка RabbitMQ-конверта `Method + Payload` перенесена внутрь `RabbitMqUploadNotifier` без изменения контракта сообщения.
 - 2026-08-04: из `RestrictStorage` / `RestrictStorageOptions` убран мёртвый `RemoteRoot`; каталог выкладки только в `ListTypes[].remoteRoot`, секция `RestrictStorage` — расширения и лимит размера.
 - 2026-08-04: логирование доведено до рабочего уровня: NLog file (+ console в Dev) с archive, exception в catch, логи шары/RabbitMQ/UI POST, поля `operation/correlationId/listType/requestId` через `BeginScope` без дублей в тексте сообщения.
 - 2026-08-04: формат RabbitMQ-сообщения приведён к контракту `Method` + строковый `Payload`; `UserId`, `UserName`, `AdditionalInfo` заполняются нейтральными заглушками.

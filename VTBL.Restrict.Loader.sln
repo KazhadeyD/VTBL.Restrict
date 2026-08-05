@@ -11,13 +11,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VTBL.Restrict.Loader.Applic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VTBL.Restrict.Loader.Infrastructure", "VTBL.Restrict.Loader.Infrastructure\VTBL.Restrict.Loader.Infrastructure.csproj", "{C3D4E5F6-A7B8-4903-A123-4567890ABCDE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VTBL.Restrict.Loader.Application.Tests", "tests\VTBL.Restrict.Loader.Application.Tests\VTBL.Restrict.Loader.Application.Tests.csproj", "{D4E5F6A7-B8C9-4A04-B234-567890ABCDEF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VTBL.Restrict.Loader.Application.Tests", "VTBL.Restrict.Loader.Application.Tests\VTBL.Restrict.Loader.Application.Tests.csproj", "{D4E5F6A7-B8C9-4A04-B234-567890ABCDEF}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VTBL.Restrict.Loader.UI.Tests", "VTBL.Restrict.Loader.UI.Tests\VTBL.Restrict.Loader.UI.Tests.csproj", "{0BABE8F4-81A6-4AB5-AA92-7598233D24A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VTBL.Restrict.Loader.UI.Tests", "tests\VTBL.Restrict.Loader.UI.Tests\VTBL.Restrict.Loader.UI.Tests.csproj", "{0BABE8F4-81A6-4AB5-AA92-7598233D24A4}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VTBL.Restrict.Loader.Tests", "tests\VTBL.Restrict.Loader.Tests\VTBL.Restrict.Loader.Tests.csproj", "{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VTBL.Restrict.Loader.Tests", "VTBL.Restrict.Loader.Tests\VTBL.Restrict.Loader.Tests.csproj", "{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VTBL.Restrict.Loader.Context", "VTBL.Restrict.Loader.Context\VTBL.Restrict.Loader.Context.csproj", "{BFB0D2AE-6A96-4E60-8EA1-6D2812E0F945}"
 EndProject
@@ -130,9 +128,5 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{0BABE8F4-81A6-4AB5-AA92-7598233D24A4} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
-		{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal

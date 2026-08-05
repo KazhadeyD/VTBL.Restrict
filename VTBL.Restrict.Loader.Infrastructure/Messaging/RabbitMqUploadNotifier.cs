@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -70,7 +71,7 @@ namespace VTBL.Restrict.Loader.Infrastructure.Messaging
                     durable: true,
                     autoDelete: false);
 
-                var payload = RestrictFileUploadedMessage.FromAppMessage(message).ToUtf8Json();
+                var payload = BuildRabbitBody(message);
                 var properties = channel.CreateBasicProperties();
                 properties.Persistent = true;
                 properties.ContentType = "application/json";
@@ -95,6 +96,43 @@ namespace VTBL.Restrict.Loader.Infrastructure.Messaging
                     routingKey);
                 throw;
             }
+        }
+
+        private static byte[] BuildRabbitBody(AppUploadedMessage message)
+        {
+            var envelope = new RabbitEnvelope
+            {
+                Method = "IllegalCompaniesLoaderProcessor",
+                Payload = JsonSerializer.Serialize(new RabbitPayload
+                {
+                    SessionId = message.CorrelationId.ToString(),
+                    UserId = "stub-user-id",
+                    UserName = "stub-user-name",
+                    FilePath = message.FilePath,
+                    AdditionalInfo = "stub-info",
+                    RequestDate = message.UploadedAtUtc.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+                }, SerializerOptions)
+            };
+
+            return JsonSerializer.SerializeToUtf8Bytes(envelope, SerializerOptions);
+        }
+
+        private static readonly JsonSerializerOptions SerializerOptions = new JsonSerializerOptions();
+
+        private sealed class RabbitEnvelope
+        {
+            public string Method { get; set; }
+            public string Payload { get; set; }
+        }
+
+        private sealed class RabbitPayload
+        {
+            public string SessionId { get; set; }
+            public string UserId { get; set; }
+            public string UserName { get; set; }
+            public string FilePath { get; set; }
+            public string AdditionalInfo { get; set; }
+            public string RequestDate { get; set; }
         }
     }
 }
