@@ -19,10 +19,14 @@ namespace VTBL.Restrict.Loader.UI
             }
             finally
             {
+                // NLog умеет буферить и писать асинхронно, поэтому на завершении процесса нужно “смыть” всё в файл.
                 NLog.LogManager.Shutdown();
             }
         }
 
+        /// <summary>
+        /// Поднимает хост и подключает NLog как единственный provider логов.
+        /// </summary>
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>

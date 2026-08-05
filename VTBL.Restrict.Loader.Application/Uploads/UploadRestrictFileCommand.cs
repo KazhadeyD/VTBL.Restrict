@@ -54,6 +54,10 @@ namespace VTBL.Restrict.Loader.Application.Uploads
             _logger = NullLogger<UploadRestrictFileCommand>.Instance;
         }
 
+        /// <summary>
+        /// Выполняет весь “боевой” пайплайн загрузки:
+        /// проверка входных данных → поиск ListType → запись файла в шеру → уведомление через IUploadNotifier.
+        /// </summary>
         public virtual async Task<UploadRestrictFileResult> ExecuteAsync(
             UploadRestrictFileRequest request,
             CancellationToken cancellationToken)
@@ -104,6 +108,9 @@ namespace VTBL.Restrict.Loader.Application.Uploads
                         listType.Code);
                 }
 
+                // correlationId нужен сразу для двух вещей:
+                // 1) чтобы файл можно было однозначно найти/сопоставить,
+                // 2) чтобы потом связать логи и сообщение в Rabbit.
                 var correlationId = Guid.NewGuid();
                 var targetPath = _pathBuilder.BuildTargetPath(
                     listType.RemoteRoot,
@@ -151,6 +158,8 @@ namespace VTBL.Restrict.Loader.Application.Uploads
                         UploadedBy = request.UploadedBy
                     };
 
+                    // После успешной записи файла в “шару” уведомляем остальной пайплайн.
+                    // Если Rabbit упадёт — файл уже на месте, значит это будет partial failure.
                     var routingKey = "restrict.upload." + listType.Code?.Trim().ToLowerInvariant();
 
                     try
@@ -169,6 +178,8 @@ namespace VTBL.Restrict.Loader.Application.Uploads
                     {
                         _logger.LogWarning(ex, "Upload publish failed with {ErrorCode}", UploadErrorCodes.Rmq);
 
+                        // Файл физически сохранён, но уведомление не дошло.
+                        // Смысл — вернуть storedPath и correlationId, чтобы можно было быстро найти проблему.
                         return PartialFail(
                             UploadErrorCodes.Rmq,
                             "Файл сохранён, но уведомление не отправлено. Обратитесь в поддержку с correlationId.",
@@ -190,6 +201,10 @@ namespace VTBL.Restrict.Loader.Application.Uploads
             }
         }
 
+        /// <summary>
+        /// Унифицированный способ “провалить загрузку” с логом.
+        /// Если исключение передали — добавим его в warning, чтобы потом не гадать, что пошло не так.
+        /// </summary>
         private UploadRestrictFileResult LogFail(
             string errorCode,
             string message,
@@ -212,6 +227,9 @@ namespace VTBL.Restrict.Loader.Application.Uploads
             return Fail(errorCode, message);
         }
 
+        /// <summary>
+        /// Полный fail: ничего полезного оператору уже не показать (correlationId/путь не возвращаем).
+        /// </summary>
         private static UploadRestrictFileResult Fail(string errorCode, string message)
         {
             return new UploadRestrictFileResult
@@ -224,6 +242,10 @@ namespace VTBL.Restrict.Loader.Application.Uploads
             };
         }
 
+        /// <summary>
+        /// Partial fail: файл физически сохранён, но уведомление (Rabbit) не дошло.
+        /// Возвращаем storedPath и correlationId, чтобы поддержка могла быстро найти конкретный артефакт.
+        /// </summary>
         private static UploadRestrictFileResult PartialFail(
             string errorCode,
             string message,

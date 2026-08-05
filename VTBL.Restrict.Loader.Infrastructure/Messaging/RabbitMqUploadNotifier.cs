@@ -13,7 +13,8 @@ using AppUploadedMessage = VTBL.Restrict.Loader.Application.Abstractions.Restric
 namespace VTBL.Restrict.Loader.Infrastructure.Messaging
 {
     /// <summary>
-    /// Публикация сообщения о загрузке файла в RabbitMQ (topic exchange).
+    /// Публикует уведомление о загруженном файле в RabbitMQ (topic exchange).
+    /// Вся “кухня” с контрактом для потребителя живёт тут, чтобы application-слой не знал детали Rabbit.
     /// </summary>
     public sealed class RabbitMqUploadNotifier : IUploadNotifier
     {
@@ -28,7 +29,13 @@ namespace VTBL.Restrict.Loader.Infrastructure.Messaging
             _logger = logger ?? NullLogger<RabbitMqUploadNotifier>.Instance;
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Публикует уведомление о загруженном файле в RabbitMQ.
+        /// </summary>
+        /// <remarks>
+        /// <para>routingKey уже формируется в application-слое (под конкретный ListType).</para>
+        /// <para>Тут мы только убеждаемся, что Rabbit настроен, и отправляем сообщение.</para>
+        /// </remarks>
         public Task PublishUploadedAsync(
             AppUploadedMessage message,
             string routingKey,
@@ -44,8 +51,13 @@ namespace VTBL.Restrict.Loader.Infrastructure.Messaging
             return Task.Run(() => PublishCore(message, routingKey), cancellationToken);
         }
 
+        /// <summary>
+        /// Непосредственно создаёт соединение/канал и делает BasicPublish.
+        /// </summary>
         private void PublishCore(AppUploadedMessage message, string routingKey)
         {
+            // Здесь мы реально лезем в RabbitMQ. Вынесли в отдельный метод, чтобы main-метод оставался
+            // максимально “тонким” (и легче тестировать/логировать).
             _logger.LogInformation(
                 "RabbitMQ publish started for exchange {Exchange} routing key {RoutingKey}",
                 _options.Exchange,
@@ -98,18 +110,26 @@ namespace VTBL.Restrict.Loader.Infrastructure.Messaging
             }
         }
 
+        // Потребитель ждёт конверт формата: { Method, Payload }, где Payload — строка JSON.
+        // Поэтому сначала строим Payload как JSON-строку, а потом оборачиваем в envelope.
+        /// <summary>
+        /// Собирает “готовый к отправке” body (envelope с Method+Payload) в виде UTF-8 JSON байтов.
+        /// </summary>
         private static byte[] BuildRabbitBody(AppUploadedMessage message)
         {
             var envelope = new RabbitEnvelope
             {
+                // Contract for the consumer: фиксированный обработчик для этого типа события.
                 Method = "IllegalCompaniesLoaderProcessor",
                 Payload = JsonSerializer.Serialize(new RabbitPayload
                 {
+                    // Loader в этой версии пользователя не “знает”, поэтому кладём нейтральные заглушки.
                     SessionId = message.CorrelationId.ToString(),
                     UserId = "stub-user-id",
                     UserName = "stub-user-name",
                     FilePath = message.FilePath,
                     AdditionalInfo = "stub-info",
+                    // Дата нужна в UTC и в стабильном ISO-формате, чтобы потребитель не гадал с часовыми поясами.
                     RequestDate = message.UploadedAtUtc.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
                 }, SerializerOptions)
             };

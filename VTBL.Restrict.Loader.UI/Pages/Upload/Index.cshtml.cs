@@ -55,6 +55,9 @@ namespace VTBL.Restrict.Loader.UI.Pages.Upload
             await PopulateListTypesAsync(cancellationToken);
         }
 
+        /// <summary>
+        /// Обрабатывает HTTP POST: валидирует форму, собирает запрос в application-layer и возвращает страницу с результатом.
+        /// </summary>
         public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
         {
             await PopulateListTypesAsync(cancellationToken);
@@ -82,6 +85,8 @@ namespace VTBL.Restrict.Loader.UI.Pages.Upload
                 [OperationLogScope.KeyListType] = Input.ListTypeCode ?? string.Empty
             }))
             {
+                // Держим всё в одном “пакете”: один HTTP-запрос -> понятные сквозные логи.
+                // Благодаря scope по ним потом легко искать проблемный correlationId.
                 _logger.LogInformation("Upload HTTP POST received");
 
                 await using var stream = Input.File.OpenReadStream();
@@ -133,6 +138,9 @@ namespace VTBL.Restrict.Loader.UI.Pages.Upload
                 : UploadErrorMessageMapper.Map(result.ErrorCode, result.Message);
         }
 
+        /// <summary>
+        /// Загружает список типов для формы оператора.
+        /// </summary>
         private async Task PopulateListTypesAsync(CancellationToken cancellationToken)
         {
             var types = await _listTypeReadStore.GetActiveAsync(cancellationToken);

@@ -22,7 +22,12 @@ namespace VTBL.Restrict.Loader.Infrastructure.Files
             _logger = logger ?? NullLogger<UncFileShareStore>.Instance;
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Записывает файл “как есть” на шеру: сначала в <c>.tmp</c>, потом rename в итоговое имя.
+        /// </summary>
+        /// <remarks>
+        /// Смысл в том, чтобы другие процессы/потребители не увидели “полуфайл”.
+        /// </remarks>
         public async Task<string> WriteAsIsAsync(
             Stream content,
             string targetFullPath,
@@ -47,6 +52,9 @@ namespace VTBL.Restrict.Loader.Infrastructure.Files
             }
 
             var tempPath = targetFullPath + ".tmp";
+
+            // Пишем во временный файл, а потом делаем rename.
+            // Так никто “на лету” не увидит полупустой/полу-записанный файл.
 
             try
             {
@@ -78,6 +86,10 @@ namespace VTBL.Restrict.Loader.Infrastructure.Files
             }
         }
 
+        /// <summary>
+        /// Пытается удалить временный файл. Если не получилось — не обваливаем основной error,
+        /// потому что это best-effort cleanup.
+        /// </summary>
         private static void TryDeleteFile(string path)
         {
             if (string.IsNullOrEmpty(path) || !File.Exists(path))
