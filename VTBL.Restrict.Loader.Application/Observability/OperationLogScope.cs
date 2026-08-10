@@ -10,7 +10,7 @@ namespace VTBL.Restrict.Loader.Application.Observability
     public static class OperationLogScope
     {
         public const string KeyOperation = "operation";
-        public const string KeyCorrelationId = "correlationId";
+        public const string KeyCorrelationId = "CorrelationId";
         public const string KeyListType = "listType";
         public const string KeyErrorCode = "errorCode";
 
