@@ -60,6 +60,8 @@ dotnet run --project VTBL.Restrict.Loader.UI --urls http://localhost:5000
 
 В Development типы списков и папки для файлов берутся из `appsettings.Development.json` (секция `ListTypes`).
 
+Лимит размера файла загрузки — **100 МБ** (`RestrictStorage:MaxFileSizeBytes` = `104857600`). Для IIS / IIS Express то же значение задано в `VTBL.Restrict.Loader.UI/web.config` (`maxAllowedContentLength`), иначе будет HTTP 413.1 до входа в приложение.
+
 Если `RabbitMq:Host` пустой — в брокер ничего не шлётся, работает локальная заглушка.
 
 ## Сборка и тесты
@@ -70,6 +72,9 @@ dotnet test VTBL.Restrict.Loader.sln
 ```
 
 ## История изменений
+
+### Сентябрь 2026
+- 2026-09-10: лимит загрузки поднят до 100 МБ (`MaxFileSizeBytes`, `[RequestSizeLimit]`, `FormOptions`, `IISServerOptions`); добавлен `web.config` с `maxAllowedContentLength` для IIS / IIS Express (устранение HTTP 413.1).
 
 ### Август 2026
 - 2026-08-10: удалён проект `VTBL.Restrict.Loader.Tests` (E2E); остаются `Application.Tests` и `UI.Tests`.

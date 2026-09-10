@@ -15,6 +15,6 @@ namespace VTBL.Restrict.Loader.Application.Options
             ".csv"
         };
 
-        public long MaxFileSizeBytes { get; set; } = 52_428_800L;
+        public long MaxFileSizeBytes { get; set; } = 104_857_600L;
     }
 }

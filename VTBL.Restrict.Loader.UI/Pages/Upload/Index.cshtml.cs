@@ -18,7 +18,7 @@ namespace VTBL.Restrict.Loader.UI.Pages.Upload
     /// <summary>
     /// Страница загрузки файла. Типы списков — из справочника активных ListType.
     /// </summary>
-    [RequestSizeLimit(52_428_800)]
+    [RequestSizeLimit(104_857_600)]
     public class IndexModel : PageModel
     {
         private readonly UploadRestrictFileCommand _uploadCommand;

@@ -28,11 +28,17 @@ namespace VTBL.Restrict.Loader.UI
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var maxFileSizeBytes = Configuration.GetValue<long?>("RestrictStorage:MaxFileSizeBytes") ?? 52_428_800L;
+            var maxFileSizeBytes = Configuration.GetValue<long?>("RestrictStorage:MaxFileSizeBytes") ?? 104_857_600L;
 
             services.Configure<FormOptions>(options =>
             {
                 options.MultipartBodyLengthLimit = maxFileSizeBytes;
+            });
+
+            // IIS / IIS Express: иначе MaxRequestBodySize по умолчанию ~30 МБ режет тело после requestFiltering.
+            services.Configure<IISServerOptions>(options =>
+            {
+                options.MaxRequestBodySize = maxFileSizeBytes;
             });
 
             services.AddRazorPages();
