@@ -15,8 +15,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VTBL.Restrict.Loader.Applic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VTBL.Restrict.Loader.UI.Tests", "VTBL.Restrict.Loader.UI.Tests\VTBL.Restrict.Loader.UI.Tests.csproj", "{0BABE8F4-81A6-4AB5-AA92-7598233D24A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VTBL.Restrict.Loader.Tests", "VTBL.Restrict.Loader.Tests\VTBL.Restrict.Loader.Tests.csproj", "{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,18 +97,6 @@ Global
 		{0BABE8F4-81A6-4AB5-AA92-7598233D24A4}.Release|x64.Build.0 = Release|Any CPU
 		{0BABE8F4-81A6-4AB5-AA92-7598233D24A4}.Release|x86.ActiveCfg = Release|Any CPU
 		{0BABE8F4-81A6-4AB5-AA92-7598233D24A4}.Release|x86.Build.0 = Release|Any CPU
-		{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}.Debug|x64.Build.0 = Debug|Any CPU
-		{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}.Debug|x86.Build.0 = Debug|Any CPU
-		{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}.Release|x64.ActiveCfg = Release|Any CPU
-		{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}.Release|x64.Build.0 = Release|Any CPU
-		{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}.Release|x86.ActiveCfg = Release|Any CPU
-		{9DE5E0C4-3A05-4DF2-B2EA-F87B62567624}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

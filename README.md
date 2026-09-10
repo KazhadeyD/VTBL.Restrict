@@ -18,7 +18,7 @@ Workflow:
 | `VTBL.Restrict.Loader.Application` | Сценарий «проверил → записал → уведомил» |
 | `VTBL.Restrict.Loader.Domain` | Общие правила (расширения, лимиты и т.п.) |
 | `VTBL.Restrict.Loader.Infrastructure` | Запись на шару, RabbitMQ, заглушки для локальной работы |
-| `VTBL.Restrict.Loader.*.Tests` | Автотесты |
+| `VTBL.Restrict.Loader.Application.Tests` / `UI.Tests` | Автотесты |
 | `docker-compose.yml` | Локальный SQL (если нужен стенд вокруг, сам Loader для загрузки его не использует) |
 | `docs/` | Описание продукта, БД, запуска и интеграций |
 
@@ -70,3 +70,6 @@ dotnet test VTBL.Restrict.Loader.sln
 ```
 
 ## История изменений
+
+### Август 2026
+- 2026-08-10: удалён проект `VTBL.Restrict.Loader.Tests` (E2E); остаются `Application.Tests` и `UI.Tests`.

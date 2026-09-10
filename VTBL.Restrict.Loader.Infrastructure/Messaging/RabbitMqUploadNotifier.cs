@@ -120,7 +120,7 @@ namespace VTBL.Restrict.Loader.Infrastructure.Messaging
             var envelope = new RabbitEnvelope
             {
                 // Contract for the consumer: фиксированный обработчик для этого типа события.
-                Method = "IllegalCompaniesLoaderProcessor",
+                Method = "RestrictiveListsLoaderProcessor",
                 Payload = JsonSerializer.Serialize(new RabbitPayload
                 {
                     // Loader в этой версии пользователя не “знает”, поэтому кладём нейтральные заглушки.
@@ -130,7 +130,8 @@ namespace VTBL.Restrict.Loader.Infrastructure.Messaging
                     FilePath = message.FilePath,
                     AdditionalInfo = "stub-info",
                     // Дата нужна в UTC и в стабильном ISO-формате, чтобы потребитель не гадал с часовыми поясами.
-                    RequestDate = message.UploadedAtUtc.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+                    RequestDate = message.UploadedAtUtc.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                    ListType = message.MessageType,
                 }, SerializerOptions)
             };
 
@@ -153,6 +154,8 @@ namespace VTBL.Restrict.Loader.Infrastructure.Messaging
             public string FilePath { get; set; }
             public string AdditionalInfo { get; set; }
             public string RequestDate { get; set; }
+            public string ListType { get; set; }
+            
         }
     }
 }
