@@ -57,6 +57,18 @@
     <button type="submit" class="btn btn-primary" data-upload-submit="true">Отправить</button>
 </form>
 
+<div id="upload-wait"
+     class="upload-wait"
+     data-upload-wait="true"
+     hidden
+     aria-live="polite"
+     aria-busy="false">
+    <div class="upload-wait-panel">
+        <div class="upload-wait-spinner" aria-hidden="true"></div>
+        <div class="upload-wait-text">Ожидайте</div>
+    </div>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/upload-dnd.js" asp-append-version="true"></script>

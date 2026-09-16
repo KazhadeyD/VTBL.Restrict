@@ -76,6 +76,8 @@ dotnet test VTBL.Restrict.Loader.sln
 ## История изменений
 
 ### Сентябрь 2026
+- 2026-09-16: при отправке формы загрузки показывается оверлей «Ожидайте» (спиннер); скрывается после ответа сервера (перезагрузка страницы).
+- 2026-09-16: при новой попытке загрузки с экрана убирается результат предыдущей (submit / смена файла или типа списка / очистка файла).
 - 2026-09-16: совместимость UI с IE 11 / Edge IE mode — CSS без custom properties и `gap`, `X-UA-Compatible`, fallback загрузки файла без `DataTransfer`, текст очистки без emoji.
 - 2026-09-10: лимит загрузки поднят до 100 МБ (`MaxFileSizeBytes`, `[RequestSizeLimit]`, `FormOptions`, `IISServerOptions`); добавлен `web.config` с `maxAllowedContentLength` для IIS / IIS Express (устранение HTTP 413.1).
 
