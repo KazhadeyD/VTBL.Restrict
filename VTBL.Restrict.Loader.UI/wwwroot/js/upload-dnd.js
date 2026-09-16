@@ -1,14 +1,20 @@
 /**
  * Drag-and-drop и выбор файла: только имя и размер, без чтения содержимого.
  * Отправка формы только по явному нажатию кнопки.
+ * IE 11: без DataTransfer — только выбор через кнопку / input file.
  */
 (function () {
+    function supportsDataTransfer() {
+        return typeof DataTransfer !== 'undefined';
+    }
+
     function initUploadDnD(options) {
         var input = document.getElementById(options.inputId || 'upload-file');
         var meta = document.getElementById(options.metaId || 'upload-file-meta');
         var zone = document.getElementById(options.zoneId || 'upload-dropzone');
         var browse = document.getElementById(options.browseId || 'upload-browse');
         var clearBtn = document.getElementById(options.clearId || 'upload-file-clear');
+        var canAssignFiles = supportsDataTransfer();
 
         if (!input || !meta || !zone) {
             return;
@@ -37,7 +43,7 @@
         }
 
         function assignFile(file) {
-            if (!file) {
+            if (!file || !canAssignFiles) {
                 return;
             }
             try {
@@ -52,11 +58,13 @@
 
         function clearFile() {
             input.value = '';
-            try {
-                var dt = new DataTransfer();
-                input.files = dt.files;
-            } catch (e) {
-                // Fallback: value reset above is enough for submit validation.
+            if (canAssignFiles) {
+                try {
+                    var dt = new DataTransfer();
+                    input.files = dt.files;
+                } catch (e) {
+                    // Fallback: value reset above is enough for submit validation.
+                }
             }
             showMeta();
         }
@@ -77,30 +85,24 @@
             });
         }
 
-        zone.addEventListener('dragover', function (e) {
-            e.preventDefault();
-            zone.classList.add('border-primary');
-        });
+        if (canAssignFiles) {
+            zone.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                zone.classList.add('border-primary');
+            });
 
-        zone.addEventListener('dragleave', function () {
-            zone.classList.remove('border-primary');
-        });
+            zone.addEventListener('dragleave', function () {
+                zone.classList.remove('border-primary');
+            });
 
-        zone.addEventListener('drop', function (e) {
-            e.preventDefault();
-            zone.classList.remove('border-primary');
-            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
-                assignFile(e.dataTransfer.files[0]);
-            }
-        });
-
-        zone.addEventListener('click', function (e) {
-            if (e.target === browse || (browse && browse.contains(e.target))) {
-                return;
-            }
-            // Click on zone opens picker only if not using dedicated browse button path —
-            // keep zone as visual drop target; browse button handles click select.
-        });
+            zone.addEventListener('drop', function (e) {
+                e.preventDefault();
+                zone.classList.remove('border-primary');
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    assignFile(e.dataTransfer.files[0]);
+                }
+            });
+        }
 
         showMeta();
     }
