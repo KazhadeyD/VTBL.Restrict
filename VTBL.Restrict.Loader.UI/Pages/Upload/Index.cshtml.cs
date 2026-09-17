@@ -7,8 +7,10 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using VTBL.Restrict.Loader.Application.Abstractions;
 using VTBL.Restrict.Loader.Application.Observability;
+using VTBL.Restrict.Loader.Application.Options;
 using VTBL.Restrict.Loader.Application.Uploads;
 using VTBL.Restrict.Loader.UI.Models;
 using VTBL.Restrict.Loader.UI.Uploads;
@@ -21,17 +23,22 @@ namespace VTBL.Restrict.Loader.UI.Pages.Upload
     [RequestSizeLimit(104_857_600)]
     public class IndexModel : PageModel
     {
+        private static readonly string InvalidExtensionMessage = "Недопустимое расширение файла.";
+
         private readonly UploadRestrictFileCommand _uploadCommand;
         private readonly IListTypeReadStore _listTypeReadStore;
+        private readonly RestrictStorageOptions _storageOptions;
         private readonly ILogger _logger;
 
         public IndexModel(
             UploadRestrictFileCommand uploadCommand,
             IListTypeReadStore listTypeReadStore,
+            IOptions<RestrictStorageOptions> storageOptions,
             ILogger<IndexModel> logger = null)
         {
             _uploadCommand = uploadCommand;
             _listTypeReadStore = listTypeReadStore;
+            _storageOptions = storageOptions?.Value ?? new RestrictStorageOptions();
             _logger = logger ?? NullLogger<IndexModel>.Instance;
         }
 
@@ -104,7 +111,7 @@ namespace VTBL.Restrict.Loader.UI.Pages.Upload
 
                 if (!result.Success)
                 {
-                    ModelState.AddModelError(string.Empty, ResultMessage);
+                    ModelState.AddModelError(string.Empty, BuildModelStateDetail(result));
                 }
 
                 _logger.LogInformation(
@@ -136,6 +143,41 @@ namespace VTBL.Restrict.Loader.UI.Pages.Upload
             ResultMessage = result.Success
                 ? (result.Message ?? "Файл успешно загружен и передан на обработку.")
                 : UploadErrorMessageMapper.Map(result.ErrorCode, result.Message);
+        }
+
+        /// <summary>
+        /// Текст для validation summary: при недопустимом расширении — список из конфига, иначе как в alert.
+        /// </summary>
+        private string BuildModelStateDetail(UploadRestrictFileResult result)
+        {
+            var message = result?.Message?.Trim() ?? string.Empty;
+            if (result?.ErrorCode == UploadErrorCodes.Validation &&
+                string.Equals(message, InvalidExtensionMessage, System.StringComparison.Ordinal))
+            {
+                return FormatAllowedExtensionsHint();
+            }
+
+            return ResultMessage ?? message;
+        }
+
+        private string FormatAllowedExtensionsHint()
+        {
+            var extensions = (_storageOptions.AllowedExtensions ?? System.Array.Empty<string>())
+                .Where(e => !string.IsNullOrWhiteSpace(e))
+                .Select(e =>
+                {
+                    var value = e.Trim();
+                    return value.StartsWith(".", System.StringComparison.Ordinal) ? value : "." + value;
+                })
+                .Distinct(System.StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (extensions.Length == 0)
+            {
+                return "Допустимые расширения не заданы в конфигурации.";
+            }
+
+            return "Допустимые расширения: " + string.Join(", ", extensions);
         }
 
         /// <summary>
