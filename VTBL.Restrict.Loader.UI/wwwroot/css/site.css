@@ -76,14 +76,13 @@ a.navbar-brand {
   flex-direction: row;
 }
 
-/* Main content window */
+/* Main content window — без flex: иначе карточка уезжает вправо (Bootstrap .container + width:100%) */
 .page-shell {
-  display: flex;
-  justify-content: center;
   padding-top: 1.25rem;
 }
 
 .page-main {
+  display: block;
   width: 100%;
   max-width: 640px;
   margin-left: auto;
@@ -150,6 +149,23 @@ a.navbar-brand {
 .form-control:focus {
   border-color: #4ba3e3;
   box-shadow: 0 0 0 0.2rem rgba(75, 163, 227, 0.25);
+}
+
+/* Нативный file input скрыт: выбор через dropzone / «Выбрать файл» */
+#upload-form .form-group {
+  position: relative;
+}
+
+#upload-file,
+input[data-upload-file="true"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 
 .corp-dropzone {
