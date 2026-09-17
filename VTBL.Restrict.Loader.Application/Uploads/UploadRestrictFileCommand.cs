@@ -155,7 +155,9 @@ namespace VTBL.Restrict.Loader.Application.Uploads
                         FilePath = storedPath,
                         OriginalFileName = request.OriginalFileName,
                         UploadedAtUtc = DateTime.UtcNow,
-                        UploadedBy = request.UploadedBy
+                        UploadedBy = request.UploadedBy ?? request.UserName,
+                        UserId = request.UserId,
+                        UserName = request.UserName ?? request.UploadedBy
                     };
 
                     // После успешной записи файла в “шару” уведомляем остальной пайплайн.

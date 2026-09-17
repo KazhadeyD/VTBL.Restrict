@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Server.IISIntegration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -40,6 +41,9 @@ namespace VTBL.Restrict.Loader.UI
             {
                 options.MaxRequestBodySize = maxFileSizeBytes;
             });
+
+            // Windows Authentication из IIS / IIS Express → HttpContext.User
+            services.AddAuthentication(IISDefaults.AuthenticationScheme);
 
             services.AddRazorPages();
 
@@ -87,6 +91,7 @@ namespace VTBL.Restrict.Loader.UI
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

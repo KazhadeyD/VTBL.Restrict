@@ -13,6 +13,7 @@ using VTBL.Restrict.Loader.Application.Observability;
 using VTBL.Restrict.Loader.Application.Options;
 using VTBL.Restrict.Loader.Application.Uploads;
 using VTBL.Restrict.Loader.UI.Models;
+using VTBL.Restrict.Loader.UI.Security;
 using VTBL.Restrict.Loader.UI.Uploads;
 
 namespace VTBL.Restrict.Loader.UI.Pages.Upload
@@ -97,13 +98,17 @@ namespace VTBL.Restrict.Loader.UI.Pages.Upload
                 _logger.LogInformation("Upload HTTP POST received");
 
                 await using var stream = Input.File.OpenReadStream();
+                var userName = WindowsUserIdentity.GetUserName(User);
+                var userId = WindowsUserIdentity.GetUserId(User);
                 var request = new UploadRestrictFileRequest
                 {
                     ListTypeCode = Input.ListTypeCode,
                     OriginalFileName = Input.File.FileName,
                     ContentLength = Input.File.Length,
                     Content = stream,
-                    UploadedBy = User?.Identity?.Name
+                    UploadedBy = userName,
+                    UserName = userName,
+                    UserId = userId
                 };
 
                 var result = await _uploadCommand.ExecuteAsync(request, cancellationToken);

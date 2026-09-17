@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Options;
+using VTBL.Restrict.Loader.Application.Options;
 using VTBL.Restrict.Loader.Application.Uploads;
 using VTBL.Restrict.Loader.Infrastructure.Stub;
 using VTBL.Restrict.Loader.UI.Models;
@@ -21,7 +23,10 @@ namespace VTBL.Restrict.Loader.UI.Tests.Unit
         public async Task OnPostAsync_InvokesCommandOnce()
         {
             var counting = new CountingUploadCommand();
-            var page = new IndexModel(counting, new InMemoryListTypeReadStore())
+            var page = new IndexModel(
+                counting,
+                new InMemoryListTypeReadStore(),
+                Options.Create(new RestrictStorageOptions()))
             {
                 PageContext = new PageContext
                 {

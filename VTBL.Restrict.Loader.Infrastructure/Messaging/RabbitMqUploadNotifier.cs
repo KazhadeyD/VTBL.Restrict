@@ -123,10 +123,9 @@ namespace VTBL.Restrict.Loader.Infrastructure.Messaging
                 Method = "RestrictiveListsLoaderProcessor",
                 Payload = JsonSerializer.Serialize(new RabbitPayload
                 {
-                    // Loader в этой версии пользователя не “знает”, поэтому кладём нейтральные заглушки.
                     SessionId = message.CorrelationId.ToString(),
-                    UserId = "stub-user-id",
-                    UserName = "stub-user-name",
+                    UserId = ResolveUserId(message),
+                    UserName = ResolveUserName(message),
                     FilePath = message.FilePath,
                     AdditionalInfo = "stub-info",
                     // Дата нужна в UTC и в стабильном ISO-формате, чтобы потребитель не гадал с часовыми поясами.
@@ -136,6 +135,31 @@ namespace VTBL.Restrict.Loader.Infrastructure.Messaging
             };
 
             return JsonSerializer.SerializeToUtf8Bytes(envelope, SerializerOptions);
+        }
+
+        private static string ResolveUserName(AppUploadedMessage message)
+        {
+            if (!string.IsNullOrWhiteSpace(message?.UserName))
+            {
+                return message.UserName.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(message?.UploadedBy))
+            {
+                return message.UploadedBy.Trim();
+            }
+
+            return "stub-user-name";
+        }
+
+        private static string ResolveUserId(AppUploadedMessage message)
+        {
+            if (!string.IsNullOrWhiteSpace(message?.UserId))
+            {
+                return message.UserId.Trim();
+            }
+
+            return "stub-user-id";
         }
 
         private static readonly JsonSerializerOptions SerializerOptions = new JsonSerializerOptions();
